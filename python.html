@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Python en el navegador — Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container card">
+    <header>
+      <h1>Demo: Python en el navegador (Pyodide)</h1>
+      <a href="index.html" class="outlined-button">Volver</a>
+    </header>
+
+    <main>
+      <p>Pulsa Ejecutar para calcular fib(30) con Python en WASM.</p>
+      <button id="run" class="outlined-button">Ejecutar</button>
+      <pre id="output" style="margin-top:12px;"></pre>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+  <script>
+    let pyodideReady = null;
+    async function initPyodide(){
+      if (!pyodideReady) pyodideReady = loadPyodide();
+      return pyodideReady;
+    }
+
+    document.getElementById('run').addEventListener('click', async () => {
+      const output = document.getElementById('output');
+      output.textContent = 'Cargando Pyodide…';
+      const pyodide = await initPyodide();
+      output.textContent = 'Ejecutando Python…';
+      const result = await pyodide.runPythonAsync(`
+def fib(n):
+    a,b = 0,1
+    for _ in range(n):
+        a,b = b,a+b
+    return a
+fib(30)
+`);
+      output.textContent = 'fib(30) = ' + result;
+    });
+  </script>
+</body>
+</html>

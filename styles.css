@@ -205,17 +205,53 @@ nav ul li a:hover {
 
 /* Cards (tarjetas estilo Material) */
 .card {
-    background: var(--surface);
-    border-radius: var(--border-radius);
-    padding: 18px;
-    box-shadow: var(--shadow-elevation-1);
-    transition: box-shadow var(--transition), transform var(--transition);
-    margin-bottom: 16px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
 }
 
-.card:hover {
-    box-shadow: var(--shadow-elevation-2);
-    transform: translateY(-4px);
+/* -- Estilo Específico para la Tarjeta SpotiCTL -- */
+.spoticl-card {
+    border-left: 5px solid #1DB954;
+    background-color: #e6ffe6;
+    padding: 18px;             /* asegurar espacio interior */
+    display: block;
+    overflow: hidden;         /* evita que elementos desborden */
+}
+
+.spoticl-card h3 {
+    color: #1DB954;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 8px 0;        /* evitar márgenes inesperados */
+}
+
+/* Asegurar que la imagen no rompe el layout */
+.spotify-icon {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+/* Elimina duplicados/conflictos en .outlined-button (usa una sola definición) */
+.outlined-button {
+    display: inline-block;
+    padding: 8px 15px;
+    margin-top: 10px;
+    text-decoration: none;
+    border: 2px solid #333;
+    color: #333;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+.outlined-button:hover {
+    background-color: #333;
+    color: #fff;
 }
 
 /* Secciones generales */
