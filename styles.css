@@ -67,17 +67,204 @@ main {
 }
 
 section {
-    padding: 20px;
+    padding: 0; /* usamos .card para padding */
     margin-bottom: 20px;
-    background-color: #fff; /* Fondo blanco para las secciones */
-    border-radius: 8px; /* Bordes redondeados */
+    background: transparent;
+    border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra suave */
 }
 
 footer {
-    background: #777;
-    color: #fff;
+    background: transparent;
+    color: #6b7280;
     text-align: center;
-    padding: 1rem 0;
-    margin-top: 20px;
+    padding: 20px 0;
+    margin-top: 24px;
+    font-size: 0.9rem;
+}
+
+/* Material 2 variables y base */
+:root {
+    --md-primary: #6200ee; /* purple 500 */
+    --md-primary-variant: #3700b3;
+    --md-secondary: #03dac6;
+    --surface: #ffffff;
+    --background: #f5f7fb;
+    --on-primary: #ffffff;
+    --border-radius: 8px;
+    --shadow-elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    --shadow-elevation-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+    --transition: 200ms cubic-bezier(.4,0,.2,1);
+}
+
+/* Tipografía Material (Roboto) */
+body {
+    font-family: 'Roboto', Arial, sans-serif;
+    line-height: 1.6;
+    background-color: var(--background);
+    color: #1e1e1e;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reutilización de .container existente */
+.container {
+    width: 92%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 16px;
+}
+
+/* Header estilo App Bar */
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: transparent;
+    padding: 12px 0;
+}
+
+header h1 {
+    margin: 0;
+    font-weight: 500;
+    font-size: 1.25rem;
+    color: #111;
+}
+
+/* Navegación como text buttons */
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+nav ul li a {
+    color: #374151;
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: color var(--transition), background var(--transition);
+}
+
+nav ul li a:hover {
+    background: rgba(98,0,238,0.06);
+    color: var(--md-primary);
+}
+
+/* Botones estilo Material */
+
+/* Contained button (ej. GitHub button) */
+.github-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(180deg, var(--md-primary), var(--md-primary-variant));
+    color: var(--on-primary);
+    padding: 8px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    box-shadow: var(--shadow-elevation-1);
+    font-weight: 500;
+    transition: box-shadow var(--transition), transform var(--transition), opacity var(--transition);
+    user-select: none;
+}
+
+.github-button .material-icons {
+    font-size: 18px;
+}
+
+/* hover / active */
+.github-button:hover {
+    box-shadow: var(--shadow-elevation-2);
+    transform: translateY(-2px);
+}
+
+.github-button:active {
+    transform: translateY(0);
+    opacity: 0.95;
+}
+
+/* Outlined button */
+.outlined-button {
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(0,0,0,0.08);
+    color: var(--md-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: background var(--transition), box-shadow var(--transition);
+}
+
+.outlined-button:hover {
+    background: rgba(98,0,238,0.04);
+}
+
+/* Cards (tarjetas estilo Material) */
+.card {
+    background: var(--surface);
+    border-radius: var(--border-radius);
+    padding: 18px;
+    box-shadow: var(--shadow-elevation-1);
+    transition: box-shadow var(--transition), transform var(--transition);
+    margin-bottom: 16px;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-elevation-2);
+    transform: translateY(-4px);
+}
+
+/* Secciones generales */
+section {
+    padding: 0; /* usamos .card para padding */
+    margin-bottom: 20px;
+    background: transparent;
+    border-radius: 8px;
+}
+
+/* Títulos */
+h2 {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+    color: #111827;
+    font-weight: 600;
+}
+
+h3 {
+    font-size: 0.98rem;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #111;
+}
+
+/* Footer más suave */
+footer {
+    background: transparent;
+    color: #6b7280;
+    text-align: center;
+    padding: 20px 0;
+    margin-top: 24px;
+    font-size: 0.9rem;
+}
+
+/* Responsive tweaks */
+@media (max-width: 700px) {
+    nav ul {
+        gap: 4px;
+    }
+
+    .github-button {
+        padding: 6px 10px;
+        font-size: 0.9rem;
+    }
+
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
 }
