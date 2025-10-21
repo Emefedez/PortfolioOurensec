@@ -1,0 +1,83 @@
+/* -------------------- */
+/* 1. Estilos Globales y Reset */
+/* -------------------- */
+
+/* Box Sizing para manejo de layout más fácil */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* Fuente base para todo el documento */
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    background-color: #f4f4f4; /* Un fondo gris claro */
+    color: #333; /* Color de texto oscuro */
+}
+
+/* -------------------- */
+/* 2. Estilos de Contenedor y Layout */
+/* -------------------- */
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto; /* Centra el contenido en el medio de la pantalla */
+    padding: 20px;
+}
+
+/* -------------------- */
+/* 3. Header y Navegación */
+/* -------------------- */
+
+header {
+    background: #333; /* Fondo oscuro */
+    color: #fff;
+    padding: 1rem 0;
+}
+
+header h1 {
+    margin-bottom: 0.5rem;
+}
+
+nav ul {
+    list-style: none; /* Quita los puntos de la lista */
+    display: flex; /* Coloca los elementos del menú en una fila */
+}
+
+nav ul li a {
+    color: #fff;
+    text-decoration: none;
+    padding: 0 15px;
+    display: block;
+}
+
+nav ul li a:hover {
+    color: #ff9900; /* Efecto de color al pasar el ratón */
+}
+
+/* -------------------- */
+/* 4. Contenido Principal y Footer */
+/* -------------------- */
+
+main {
+    padding: 20px 0;
+}
+
+section {
+    padding: 20px;
+    margin-bottom: 20px;
+    background-color: #fff; /* Fondo blanco para las secciones */
+    border-radius: 8px; /* Bordes redondeados */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra suave */
+}
+
+footer {
+    background: #777;
+    color: #fff;
+    text-align: center;
+    padding: 1rem 0;
+    margin-top: 20px;
+}
