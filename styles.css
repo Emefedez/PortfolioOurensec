@@ -1,128 +1,55 @@
-/* -------------------- */
-/* 1. Estilos Globales y Reset */
-/* -------------------- */
-
-/* Box Sizing para manejo de layout más fácil */
-*, *::before, *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-/* Fuente base para todo el documento */
 body {
-    font-family: Arial, sans-serif;
-    line-height: 1.6;
-    background-color: #f4f4f4; /* Un fondo gris claro */
-    color: #333; /* Color de texto oscuro */
+  background-image: url("bobesponja2.jpg");
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: cover; /* o 'contain' si prefieres */
+  font-family: 'Proto', Arial, sans-serif;
+  line-height: 1.6;
+  /* si quieres un color de fondo de fallback */
+  background-color: #f5f7fb;
+  color: #1e1e1e;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* -------------------- */
-/* 2. Estilos de Contenedor y Layout */
-/* -------------------- */
-
-.container {
-    width: 90%;
-    max-width: 1200px;
-    margin: 0 auto; /* Centra el contenido en el medio de la pantalla */
-    padding: 20px;
+img {
+  display: block;
+  max-width:230px;
+  max-height:95px;
+  width: auto;
+  height: auto;
 }
 
-/* -------------------- */
-/* 3. Header y Navegación */
-/* -------------------- */
-
-header {
-    background: #333; /* Fondo oscuro */
-    color: #fff;
-    padding: 1rem 0;
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #333333;
 }
 
-header h1 {
-    margin-bottom: 0.5rem;
+ul li {
+  float: left;
 }
 
-nav ul {
-    list-style: none; /* Quita los puntos de la lista */
-    display: flex; /* Coloca los elementos del menú en una fila */
+ul li a {
+  
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
 }
 
-nav ul li a {
-    color: #fff;
-    text-decoration: none;
-    padding: 0 15px;
+ul li a:hover {
+  background-color: #111111;
+}
+
+nav img {
     display: block;
-}
-
-nav ul li a:hover {
-    color: #ff9900; /* Efecto de color al pasar el ratón */
-}
-
-/* -------------------- */
-/* 4. Contenido Principal y Footer */
-/* -------------------- */
-
-main {
-    padding: 20px 0;
-}
-
-section {
-    padding: 0; /* usamos .card para padding */
-    margin-bottom: 20px;
-    background: transparent;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra suave */
-}
-
-footer {
-    background: transparent;
-    color: #6b7280;
-    text-align: center;
-    padding: 20px 0;
-    margin-top: 24px;
-    font-size: 0.9rem;
-}
-
-/* Material 2 variables y base */
-:root {
-    --md-primary: #6200ee; /* purple 500 */
-    --md-primary-variant: #3700b3;
-    --md-secondary: #03dac6;
-    --surface: #ffffff;
-    --background: #f5f7fb;
-    --on-primary: #ffffff;
-    --border-radius: 8px;
-    --shadow-elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-    --shadow-elevation-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
-    --transition: 200ms cubic-bezier(.4,0,.2,1);
-}
-
-/* Tipografía Material (Roboto) */
-body {
-    font-family: 'Roboto', Arial, sans-serif;
-    line-height: 1.6;
-    background-color: var(--background);
-    color: #1e1e1e;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-/* Reutilización de .container existente */
-.container {
-    width: 92%;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 24px 16px;
-}
-
-/* Header estilo App Bar */
-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    background: transparent;
-    padding: 12px 0;
+    max-height: 40px; /* Ajusta este valor según necesites */
+    width: auto;
+    padding: 5px 10px;
+    object-fit: contain;
 }
 
 header h1 {
@@ -132,175 +59,11 @@ header h1 {
     color: #111;
 }
 
-/* Navegación como text buttons */
-nav ul {
-    list-style: none;
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-nav ul li a {
-    color: #374151;
-    text-decoration: none;
-    padding: 8px 12px;
-    border-radius: 4px;
-    font-weight: 500;
-    transition: color var(--transition), background var(--transition);
-}
-
-nav ul li a:hover {
-    background: rgba(98,0,238,0.06);
-    color: var(--md-primary);
-}
-
-/* Botones estilo Material */
-
-/* Contained button (ej. GitHub button) */
-.github-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: linear-gradient(180deg, var(--md-primary), var(--md-primary-variant));
-    color: var(--on-primary);
-    padding: 8px 14px;
-    border-radius: 6px;
-    text-decoration: none;
-    box-shadow: var(--shadow-elevation-1);
-    font-weight: 500;
-    transition: box-shadow var(--transition), transform var(--transition), opacity var(--transition);
-    user-select: none;
-}
-
-.github-button .material-icons {
-    font-size: 18px;
-}
-
-/* hover / active */
-.github-button:hover {
-    box-shadow: var(--shadow-elevation-2);
-    transform: translateY(-2px);
-}
-
-.github-button:active {
-    transform: translateY(0);
-    opacity: 0.95;
-}
-
-/* Outlined button */
-.outlined-button {
-    display: inline-block;
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: 1px solid rgba(0,0,0,0.08);
-    color: var(--md-primary);
-    text-decoration: none;
-    font-weight: 500;
-    transition: background var(--transition), box-shadow var(--transition);
-}
-
-.outlined-button:hover {
-    background: rgba(98,0,238,0.04);
-}
-
-/* Cards (tarjetas estilo Material) */
 .card {
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    margin-bottom: 20px;
-}
-
-/* -- Estilo Específico para la Tarjeta SpotiCTL -- */
-.spoticl-card {
-    border-left: 5px solid #1DB954;
-    background-color: #e6ffe6;
-    padding: 18px;             /* asegurar espacio interior */
-    display: block;
-    overflow: hidden;         /* evita que elementos desborden */
-}
-
-.spoticl-card h3 {
-    color: #1DB954;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 0 0 8px 0;        /* evitar márgenes inesperados */
-}
-
-/* Asegurar que la imagen no rompe el layout */
-.spotify-icon {
-    width: 28px;
-    height: 28px;
-    object-fit: contain;
-    display: inline-block;
-    flex-shrink: 0;
-}
-
-/* Elimina duplicados/conflictos en .outlined-button (usa una sola definición) */
-.outlined-button {
-    display: inline-block;
-    padding: 8px 15px;
-    margin-top: 10px;
-    text-decoration: none;
-    border: 2px solid #333;
-    color: #333;
-    border-radius: 5px;
-    transition: all 0.3s ease;
-}
-.outlined-button:hover {
-    background-color: #333;
-    color: #fff;
-}
-
-/* Secciones generales */
-section {
-    padding: 0; /* usamos .card para padding */
-    margin-bottom: 20px;
-    background: transparent;
-    border-radius: 8px;
-}
-
-/* Títulos */
-h2 {
-    font-size: 1.1rem;
-    margin-bottom: 12px;
-    color: #111827;
-    font-weight: 600;
-}
-
-h3 {
-    font-size: 0.98rem;
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: #111;
-}
-
-/* Footer más suave */
-footer {
-    background: transparent;
-    color: #6b7280;
-    text-align: center;
-    padding: 20px 0;
-    margin-top: 24px;
-    font-size: 0.9rem;
-}
-
-/* Responsive tweaks */
-@media (max-width: 700px) {
-    nav ul {
-        gap: 4px;
-    }
-
-    .github-button {
-        padding: 6px 10px;
-        font-size: 0.9rem;
-    }
-
-    header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
+    background-color: rgba(0,255,100,0.6); /* Example background color */
+    border: 1px solid #000000; /* Example border */
+    border-radius: 8px; /* Example border radius */
+    padding: 5px; /* Example padding */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Example shadow */
+    
 }
