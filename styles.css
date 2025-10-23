@@ -25,7 +25,8 @@ ul {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background-color: #333333;
+  background-color: #ffffff;
+  color: #000000;
 }
 
 ul li {
@@ -35,13 +36,28 @@ ul li {
 ul li a {
   
   color: white;
-  text-align: center;
+  text-align: left;
   padding: 14px 16px;
   text-decoration: none;
 }
 
 ul li a:hover {
-  background-color: #111111;
+  background-color: #615d5d;
+}
+
+nav {
+    display: flex;
+    align-items: left;
+    background-color: #ffffff;
+    padding: 0;
+    border-radius: 25px;
+    overflow: hidden;
+}
+
+.nav-left {
+    display: flex;
+    align-items: left;
+    padding: 0 10px;
 }
 
 nav img {
@@ -59,6 +75,38 @@ header h1 {
     color: #111;
 }
 
+.header-left {
+    padding: 20px 0;
+}
+
+.title {
+    font-size: 2.5em;
+    font-weight: 700;
+    color: #ffffff;
+    text-align: center;
+}
+
+.title-card {
+    background-color: rgba(70, 70, 70, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 20px 30px;
+    margin: 20px auto;      /* Cambiado de margin: 20px 5px */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    max-width: 600px;
+    width: fit-content;     /* Añadido */
+}
+
+.title-card .title {
+    font-size: 2.5em;
+    font-weight: 700;
+    color: #ffffff;
+    text-align: center;
+    margin: 0;
+    letter-spacing: 0.5px;
+    white-space: nowrap;    /* Añadido para evitar saltos de línea */
+}
+
 .card {
     background-color: rgba(0,255,100,0.6); /* Example background color */
     border: 1px solid #000000; /* Example border */
@@ -66,4 +114,161 @@ header h1 {
     padding: 5px; /* Example padding */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Example shadow */
     
+}
+
+.boton {
+    background: none;
+    border: none;
+    box-shadow: none;
+    padding: 14px 16px;
+    margin: 0;
+    border-radius: 0;
+    color: white;
+    font-size: 0.9rem;
+}
+
+.boton:hover {
+    background-color: #111111;
+    transform: none;
+    box-shadow: none;
+}
+
+.boton img {
+    height: 16px;
+    filter: brightness(0) invert(1); /* Hace la imagen blanca */
+    margin-right: 6px;
+}
+
+ul li a.boton {
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Ícono más pequeño */
+.boton .material-icons {
+    font-size: 16px;           /* Reducido de 20px */
+}
+
+/* Animación al hover */
+.boton:hover {
+    transform: translateY(-2px);   /* Elevación suave */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    background-color: rgba(253, 217, 10, 0.8);
+}
+
+/* Animación al click */
+.boton:active {
+    transform: translateY(0);
+}
+
+/* Estilo específico para la imagen de GitHub dentro del botón */
+.boton img {
+    width: auto;
+    height: 20px;    /* Altura reducida - ajusta este valor según necesites */
+    margin: 0;
+    padding: 0;
+    vertical-align: middle;
+}
+
+/* Ajuste del botón para mantener alineación */
+.boton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+}
+
+/* Estilos base para la navegación */
+nav {
+    display: flex;
+    align-items: center;
+    background-color: #ffffff;
+    padding: 0;
+    border-radius: 25px;
+    overflow: hidden;
+}
+
+/* Lista de navegación */
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #ffffff;
+}
+
+/* Elementos de la lista */
+ul li {
+    float: left;
+}
+
+/* Enlaces de navegación normales */
+ul li a {
+    display: block;
+    color: #000000;
+    font-weight: bold;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    transition: all 0.3s ease;  /* Transición suave */
+}
+
+/* Hover de enlaces normales */
+ul li a:hover {
+    background-color: #f0f0f0;
+    color: #000000;
+}
+
+/* Estilo específico para el botón de GitHub */
+.boton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: rgba(253, 217, 10, 0.6);
+    border: 1px solid #000000;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 8px;
+    color: #000000;
+    font-weight: bold;
+    text-decoration: none; /* Elimina el subrayado */
+    transition: all 0.3s ease;
+}
+
+/* Hover unificado */
+.boton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    background-color: rgba(253, 217, 10, 0.8);
+    text-decoration: none; /* Asegura que no aparezca subrayado en hover */
+}
+
+/* Click unificado */
+.boton:active {
+    transform: translateY(0);
+}
+
+/* Imagen de GitHub */
+.boton img {
+    height: 20px;
+    width: auto;
+    margin: 0;
+    padding: 0;
+    vertical-align: middle;
+    filter: none; /* Quitar el filtro que hacía la imagen blanca */
+}
+
+.card .boton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: rgba(14, 186, 23, 0.6);
+    border: 1px solid #000000;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 8px;
+    color: #000000;
+    font-weight: bold;
+    text-decoration: none; /* Elimina el subrayado */
+    transition: all 0.3s ease;
 }
