@@ -12,42 +12,36 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+main {
+    /* Añade espacio entre el header y el contenido principal */
+    margin-top: 20px;
+}
 img {
-  display: block;
+  /* Estilos generales para imágenes pequeñas como logos */
   max-width:230px;
   max-height:95px;
   width: auto;
   height: auto;
 }
 
-ul {
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  background-color: #ffffff;
-  color: #000000;
+nav img {
+    display: block;
+    max-height: 40px; /* Ajusta este valor según necesites */
+    width: auto;
+    padding: 5px 10px;
+    object-fit: contain;
 }
+/* ==========================================================================
+   Header & Navigation
+   ========================================================================== */
 
-ul li {
-  float: left;
-}
-
-ul li a {
-  
-  color: white;
-  text-align: left;
-  padding: 14px 16px;
-  text-decoration: none;
-}
-
-ul li a:hover {
-  background-color: #615d5d;
+.header-left {
+    padding: 20px 0;
 }
 
 nav {
     display: flex;
-    align-items: left;
+    align-items: center;
     background-color: #ffffff;
     padding: 0;
     border-radius: 25px;
@@ -60,23 +54,13 @@ nav {
     padding: 0 10px;
 }
 
-nav img {
-    display: block;
-    max-height: 40px; /* Ajusta este valor según necesites */
-    width: auto;
-    padding: 5px 10px;
-    object-fit: contain;
-}
+
 
 header h1 {
     margin: 0;
     font-weight: 500;
     font-size: 1.25rem;
     color: #111;
-}
-
-.header-left {
-    padding: 20px 0;
 }
 
 .title {
@@ -90,7 +74,7 @@ header h1 {
     background-color: rgba(70, 70, 70, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    padding: 20px 30px;
+    padding: 20px 200px;
     margin: 20px auto;      /* Cambiado de margin: 20px 5px */
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     max-width: 600px;
@@ -104,8 +88,11 @@ header h1 {
     text-align: center;
     margin: 0;
     letter-spacing: 0.5px;
-    white-space: nowrap;    /* Añadido para evitar saltos de línea */
 }
+
+/* ==========================================================================
+   Card Styles
+   ========================================================================== */
 
 .card {
     background-color: rgba(0,255,100,0.6); /* Example background color */
@@ -116,6 +103,65 @@ header h1 {
     
 }
 
+.cardwriteup {
+    background-color: rgba(208, 255, 22, 0.6);
+    border: 1px solid #000000;
+    border-radius: 8px;
+    padding: 20px; /* Aumentado para mejor legibilidad */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px; /* Espacio entre tarjetas */
+}
+
+/* --- Estilos para mejorar la legibilidad del texto dentro del writeup --- */
+.cardwriteup h2 {
+    margin-top: 0; /* El primer elemento no necesita margen superior */
+    padding-bottom: 8px;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+}
+
+.cardwriteup p, .cardwriteup li {
+    font-size: 1.1rem; /* Aumenta ligeramente el tamaño del texto */
+    line-height: 1.7;  /* Más espacio entre líneas */
+}
+
+.cardwriteup ul {
+    list-style-type: disc; /* Restaura las viñetas */
+    padding-left: 25px;    /* Añade espaciado interior a las listas */
+    margin-top: 10px;
+}
+
+.cardwriteup ul ul {
+    list-style-type: circle; /* Viñetas diferentes para sub-listas */
+}
+
+.code-block {
+    background-color: #2d2d2d;
+    color: #f0f0f0;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 15px 0;
+    font-family: 'Courier New', Courier, monospace;
+    white-space: pre-wrap; /* Permite que el texto largo se ajuste */
+    overflow-x: auto;      /* Añade scroll si el contenido es muy ancho */
+}
+
+/* Estilo para imágenes dentro del writeup */
+.writeup-img {
+    display: block;
+    max-width: 80%; /* La imagen no superará el 80% del ancho de la tarjeta */
+    /* Anulamos la restricción de altura de la regla 'img' general */
+    max-height: none; 
+    height: auto;   /* Mantiene la proporción */
+    margin: 20px auto; /* Centra la imagen vertical y horizontalmente */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ==========================================================================
+   Button Styles
+   ========================================================================== */
+
+/* Estilo base para botones */
 .boton {
     background: none;
     border: none;
@@ -125,102 +171,6 @@ header h1 {
     border-radius: 0;
     color: white;
     font-size: 0.9rem;
-}
-
-.boton:hover {
-    background-color: #111111;
-    transform: none;
-    box-shadow: none;
-}
-
-.boton img {
-    height: 16px;
-    filter: brightness(0) invert(1); /* Hace la imagen blanca */
-    margin-right: 6px;
-}
-
-ul li a.boton {
-    display: inline-flex;
-    align-items: center;
-}
-
-/* Ícono más pequeño */
-.boton .material-icons {
-    font-size: 16px;           /* Reducido de 20px */
-}
-
-/* Animación al hover */
-.boton:hover {
-    transform: translateY(-2px);   /* Elevación suave */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    background-color: rgba(253, 217, 10, 0.8);
-}
-
-/* Animación al click */
-.boton:active {
-    transform: translateY(0);
-}
-
-/* Estilo específico para la imagen de GitHub dentro del botón */
-.boton img {
-    width: auto;
-    height: 20px;    /* Altura reducida - ajusta este valor según necesites */
-    margin: 0;
-    padding: 0;
-    vertical-align: middle;
-}
-
-/* Ajuste del botón para mantener alineación */
-.boton {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-}
-
-/* Estilos base para la navegación */
-nav {
-    display: flex;
-    align-items: center;
-    background-color: #ffffff;
-    padding: 0;
-    border-radius: 25px;
-    overflow: hidden;
-}
-
-/* Lista de navegación */
-ul {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    background-color: #ffffff;
-}
-
-/* Elementos de la lista */
-ul li {
-    float: left;
-}
-
-/* Enlaces de navegación normales */
-ul li a {
-    display: block;
-    color: #000000;
-    font-weight: bold;
-    text-align: center;
-    padding: 14px 16px;
-    text-decoration: none;
-    transition: all 0.3s ease;  /* Transición suave */
-}
-
-/* Hover de enlaces normales */
-ul li a:hover {
-    background-color: #f0f0f0;
-    color: #000000;
-}
-
-/* Estilo específico para el botón de GitHub */
-.boton {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -235,15 +185,13 @@ ul li a:hover {
     transition: all 0.3s ease;
 }
 
-/* Hover unificado */
+/* Hover y Click unificado para botones */
 .boton:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     background-color: rgba(253, 217, 10, 0.8);
     text-decoration: none; /* Asegura que no aparezca subrayado en hover */
 }
-
-/* Click unificado */
 .boton:active {
     transform: translateY(0);
 }
@@ -258,6 +206,7 @@ ul li a:hover {
     filter: none; /* Quitar el filtro que hacía la imagen blanca */
 }
 
+/* Botón específico dentro de .card (como el de "Leer" en writeups.html) */
 .card .boton {
     display: inline-flex;
     align-items: center;
@@ -271,4 +220,38 @@ ul li a:hover {
     font-weight: bold;
     text-decoration: none; /* Elimina el subrayado */
     transition: all 0.3s ease;
+}
+
+/* ==========================================================================
+   Navigation List Styles
+   ========================================================================== */
+
+/* Lista de navegación */
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* Elementos de la lista */
+nav ul li {
+    float: left;
+}
+
+/* Enlaces de navegación normales */
+nav ul li a {
+    display: block;
+    color: #000000;
+    font-weight: bold;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    transition: all 0.3s ease;  /* Transición suave */
+}
+
+/* Hover de enlaces normales */
+nav ul li a:hover {
+    background-color: #f0f0f0;
+    color: #000000;
 }

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Writeup: Investigación DRM eLibro</title>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="icon" href="../banana-icon.gif" type="image/gif">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-left">
+                <div class="title-card">
+                    <h1 class="title">Siempre dicen que la primera vez es difícil...</h1>
+                </div>
+            </div>
+            <nav>
+                <div class="nav-left">
+                    <img src="../banana-icon.gif" alt="Banana Épica" class="nav-icon" />
+                </div>
+
+                <ul>
+                    <li><a href="../index.html">Inicio</a></li>
+                    <li><a href="../programas.html">Programas</a></li>
+                    <li><a href="../writeups.html">Writeups</a></li>
+                    <li>
+                        <a href="https://github.com/Emefedez" target="_blank" class="boton">
+                            <img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fpngimg.com%2Fuploads%2Fgithub%2Fgithub_PNG40.png" alt="Github" />
+                            Ver en GitHub
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </header>
+
+    <main>
+        <section class="cardwriteup">
+            <h2> ==> Objetivo y Motivación</h2>
+            <p>La <strong>motivación</strong> En busca de ejercicios para preparar un examen de FMI, entré a la página <a href="https://perseo.uvigo.gal">de Perseo</a> y encontré un libro interesante; que sorpresa la mía cuando resulta que necesito una app propietaria para leerlo. Suponiendo (ilusamente) que no habría nada más que hacer salvo por sacar un archivo y meterlo a DeDRM en Calibre, decidí intentar conseguir el documento para poder leerlo cómodamente en mi tablet y sin límite de tiempo (siendo realista, probablemente lo hubiera tocado 3 veces xd. PERO BUENO).</p>
+            <p>El <strong>objetivo técnico</strong> era eliminar la protección DRM de un libro específico (identificado internamente como <code>97884136613221761405767.pdf</code>) descargado a través de la aplicación <strong>eLibro Desktop V1</strong> en macOS, para poder gestionarlo en Calibre u otros lectores más cómodos o compatibles con la tablet.</p>
+        </section>
+
+        <section class="cardwriteup">
+            <h2>1. Investigación Inicial: Archivos Locales</h2>
+            <ul>
+                <li><strong>Tecnología:</strong> Se identificó (con la bendita ayuda de la inteligencia artificial) que la app usa <strong>Electron</strong> (JavaScript, HTML, CSS) y almacena datos en bases de datos <strong>LevelDB</strong> (usadas por IndexedDB y Local Storage).</li>
+                <li><strong>Ubicación de Datos:</strong> La carpeta principal de datos se localizó en <code>/Users/usuario/Library/Application Support/elibro-desktop-reader/</code>.</li>
+                <li><strong>Contenido:</strong> Esta carpeta (y sus subcarpetas <code>IndexedDB</code>, <code>Local Storage</code>, etc.) contenía archivos prometedores por nombre, pero acabaron siendo de configuración y bases de datos, demasiado pequeños (<strong>~17 MB</strong>). Se concluyó que <strong>no contenía el archivo PDF completo</strong> del libro (que debería pesar varios MB).</li>
+                <img src="./elibro-desktop-archivos.png" alt="Captura de pantalla de la carpeta de datos de eLibro" class="writeup-img" />
+                <li><strong>Pista Falsa (Log):</strong> Un log interno mencionaba la ruta <code>/DOCUMENTS/elibroreader/downloads/3581993.pdf</code>, pero se determinó que era una <strong>clave interna</strong> de la base de datos, no una ruta real del sistema de archivos. No hayé ninguna otra referencia a esto.</li>
+                <li><strong>Conclusión Parcial:</strong> Los archivos del libro no se almacenan como PDFs simples, están divididos u ocultos en alguna carpeta de difícil acceso, pues el uso de <a href= "https://github.com/Pixel-Master/File-Find">File Find</a> no encontró nada.</li>
+            </ul>
+        </section>
+
+        <section class="cardwriteup">
+            <h2>2. Hipótesis 1: Extracción de Archivo Temporal</h2>
+            <ul>
+                <li><strong>Suposición:</strong> La app extrae y descifra el PDF a un archivo temporal (<code>.tmp</code> o <code>.pdf</code>) en el sistema cuando se abre el libro.</li>
+                <li><strong>Método 1 (<code>fs_usage</code>):</strong> Se usó <code>sudo fs_usage</code> para monitorizar la actividad del sistema de archivos mientras se abría el libro.
+                    <ul>
+                        <li>Se aplicaron filtros sucesivos (<code>grep -i 'elibro'</code>, <code>grep -E "WrData|write"</code>, <code>grep "/private/var/folders/"</code>, <code>grep -E "(\.pdf|\.tmp)"</code>).</li>
+                        <li>Se identificaron escrituras de archivos temporales llamados <code>.net.elibro.com.[aleatorio]</code> (≈2 MB).</li>
+                        <li><strong>Análisis:</strong> Estos archivos resultaron ser <strong>librerías nativas</strong> (módulos Node.js, probablemente <code>sqlite3</code> para Electron), no el PDF. Eran una <strong>pista falsa</strong>.</li>
+                        <li><strong>Resultado:</strong> <code>fs_usage</code> no mostró ninguna escritura a un archivo <code>.pdf</code> o <code>.tmp</code> relevante por parte de la app eLibro.</li>
+                    </ul>
+                </li>
+                <li><strong>Método 2 (<code>lsof</code>):</strong> Se usó <code>lsof</code> para listar los archivos abiertos por los procesos de eLibro mientras el libro estaba visible.
+                    <ul>
+                        <li>Se identificaron los PIDs correctos usando <code>ps aux | grep -i elibro</code>.</li>
+                        <li>Se ejecutó <code>lsof -p [PID] | grep "/private/var/folders/"</code>.</li>
+                        <li><strong>Resultado:</strong> Solo se listaron los archivos <code>.net.elibro.com...</code> (las librerías) y más basura. No había ningún archivo PDF o temporal grande abierto.</li>
+                    </ul>
+                </li>
+                <li><strong>Conclusión Hipótesis 1:</strong> La aplicación <strong>NO escribe el PDF descifrado a un archivo temporal</strong>. Probablemente lo descifra directamente en la memoria RAM para mostrarlo.</li>
+            </ul>
+        </section>
+
+        <section class="cardwriteup">
+            <h2>3. Hipótesis 2: Captura de Red + DRM Estándar de Adobe</h2>
+             <ul>
+                <li><strong>Suposición:</strong> El archivo descargado usa el DRM estándar de Adobe, y la clave se puede obtener instalando Adobe Digital Editions (ADE) y corriendo DeDRM con el archivo <code>activation.dat</code> localizado en.</li>
+                <li><strong>Método (Captura):</strong> Se usó <strong>Proxyman</strong> para capturar el tráfico de red.
+                    <ul>
+                        <li>Primero devolví el libro en la app, forzando que se desinstale el libro.</li>
+                        <li>Volví a descargar el libro.</li>
+                        <li>Buscamos URLs prometedores y... (<code>mobile-librarian-prod.s3-us-west-1.amazonaws.com/...pdf</code>).</li>
+                        <img src="./elibro-desktop-archivos.png" alt="Proxyman" class="writeup-img" />
+                        <p>¡Bingo!</p>
+                        <li>Se guardó el <strong>"Response Body"</strong> de esa descarga como <code>pdfcifrado.pdf</code>. Ya tenemos el archivo :)</li>
+                        
+                    </ul>
+                </li>
+                 <li><strong>Método (Intento de Descifrado - Adobe): Ergo... no tenemos el archivo</strong>
+                    <ul>
+                        <li>Se instaló y autorizó <strong>Adobe Digital Editions (ADE)</strong> con una cuenta de Adobe ID, que empleaba el mismo correo que la cuenta de eLibro.</li>
+                        <li>Se intentó descifrar <code>pdfcifrado.pdf</code> usando la herramienta manual <code>ineptpdf.py</code> (parte de DeDRM tools), pasándole el archivo de clave de ADE:
+                            <div class="code-block">
+                                <code>python3 ineptpdf.py activation.dat pdfcifrado.pdf pdfdescifrado.pdf</code>
+                            </div>
+                        </li>
+                        <li><strong>Resultado:</strong> El script falló consistentemente con el error <code>Password invalid.</code> ; <strong> mierda.</strong>
+                    </ul>
+                </li>
+                 <li><strong>Conclusión Hipótesis 2:</strong> El libro <strong>NO usa el DRM estándar de Adobe</strong>. Las herramientas DeDRM (Calibre o manuales) no son compatibles.</li>
+            </ul>
+        </section>
+
+        <section class="cardwriteup">
+            <h2>4. Hipótesis 3: Captura de Red + DRM Propietario de eLibro</h2>
+            <ul>
+                <li><strong>Suposición:</strong> eLibro usa su propio sistema DRM. La clave de descifrado debe viajar por la red, probablemente en una respuesta de la API de eLibro.</li>
+                <li><strong>Método (Análisis de API):</strong> Se re-examinó la captura de Proxyman realizada durante la <strong>descarga</strong> del libro, importé todo lo que tenía y pasé por encima de unos 20 <code>.json</code> hasta encontrar 3 que parecían interesantes.
+                    Aunque una fueran metadatos del libro, había 2 con algún tipo de "passkey". Uno parece más importante así que no lo voy a compartir entero, aquí podéis ver como se sincronizan las portadas ("que por cierto no están encriptadas") de los libros:
+                    <img src="./sincronizacionportada.png" alt="Sincronización portada" class="writeup-img">
+                </li>
+                <li><strong>El otro...:</strong> ¿parece Base64?:
+                    <div class="code-block">
+                        <pre><code>"passkey": "TVRjM...[largo texto]...9Odz09"</code></pre>
+                    </div>
+                </li>
+                 <li><strong>Análisis del <code>passkey</code>:</strong>
+                    <ul>
+                        <li>Un análisis más detallado (básicamente bombardear a Gemini y ChatGPT, que no se mucho de esto, sigo en primero de carrera :v) reveló que esta <code>passkey</code>, tras decodificarla de Base64, contenía múltiples partes separadas por <code>;</code>: un <strong>timestamp</strong>, una <strong>dirección IP</strong> y un <strong>bloque binario</strong> (≈78 bytes).</li>
+                        <li><strong>Conclusión Clave:</strong> Esta <code>passkey</code> <strong>NO es la clave AES</strong> directamente. Es un <strong>token de autorización</strong> complejo.</li>
+                    </ul>
+                </li>
+                <li><strong>Método (Intento de Descifrado - Script Personalizado):</strong> Se crearon varios scripts de Python usando <code>pycryptodomex</code> para intentar usar partes de la <code>passkey</code> decodificada como si fueran la clave AES y/o el IV/nonce, probando modos <code>AES.MODE_CBC</code> y <code>AES.MODE_CTR</code>.
+                    <ul>
+                        <li><strong>Resultados:</strong> Todos los intentos fallaron. Los errores incluyeron:
+                            <li>
+                                <div class="code-block">
+                                    <pre><code>non-hexadecimal number found</code> (cuando se asumió formato hex).</pre>
+                                    <pre><code>Data must be padded to 16 byte boundary</code> (cuando se usó CBC y el tamaño del PDF no era múltiplo de 16).</pre>
+                                    <pre><code>Nonce is too long</code> (cuando se usó CTR con nonce de 16 bytes).</pre>
+                                    <pre><code>Salida descifrada que no empezaba con %PDF-</code> (cuando se usó CTR con nonce de 8 bytes), indicando que la llave/método seguía siendo incorrecto.</pre>
+                                </div>
+                            </li>
+                        </li>
+                    </ul>
+                </li>
+                <li><strong>Conclusión Hipótesis 3:</strong> La <code>passkey</code> es un token, no la llave AES final. La app eLibro tiene lógica interna (secreta) para procesar este token y derivar la verdadera clave AES.</li>
+            </ul>
+        </section>
+
+        <section class="cardwriteup">
+            <h2>Conclusión</h2>
+
+                <li>eLibro Desktop V1 utiliza un <strong>sistema DRM propietario</strong>, no el estándar de Adobe.</li>
+                <li>El libro cifrado se descarga como un archivo PDF (<code>pdfcifrado.pdf</code>) desde Amazon S3.</li>
+                <li>La autorización para leerlo se gestiona mediante un <strong>token <code>passkey</code></strong> obtenido de la API de eLibro.</li>
+                <li>Este <code>passkey</code> <strong>no es la clave AES final</strong>.</li>
+                <li>Las herramientas estándar (DeDRM, <code>ineptpdf.py</code>) <strong>no funcionan</strong>.</li>
+                <li>Los scripts personalizados fallan porque <strong>se desconoce el algoritmo exacto</strong> que usa la app eLibro para convertir la <code>passkey</code> en la clave AES final, así como los parámetros AES correctos (modo, IV/nonce, padding).</li>
+                <li><strong>Próximo Paso Lógico (si se desea continuar):</strong> <strong>Ingeniería inversa</strong> del código fuente JavaScript de la aplicación (extraído del archivo <code>app.asar</code>) para encontrar la lógica que procesa la <code>passkey</code> y realiza el descifrado AES. Esto permitiría replicar el proceso en un script personalizado. Me queda grande jeje (por ahora... muejejej )</li>
+                <p></p>
+                <strong>¡Me despido!</strong> tengo que hacer más programas recursivos en C++, que el deber me llama.
+ 
+        </section>
+
+    </main>
+    </div>
+
+    <footer>
+        <p>&copy; 2025. Mi Trabajo.</p> </footer>
+</body>
+</html>
