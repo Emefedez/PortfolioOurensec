@@ -103,6 +103,12 @@ header h1 {
     
 }
 
+/* Larger text for program descriptions */
+.program-description {
+    font-size: 1.15rem;
+    line-height: 1.6;
+}
+
 .cardwriteup {
     background-color: rgba(208, 255, 22, 0.6);
     border: 1px solid #000000;
