@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, SkipForward, RotateCcw, PlusCircle, MousePointer2, Trash2, Info, ArrowRight, Activity, Zap, CheckCircle2, HelpCircle } from 'lucide-react';
+import { Play, Pause, SkipForward, RotateCcw, MousePointer2, Trash2, Info, ArrowRight, Activity, Zap, Eraser, Move } from 'lucide-react';
 
 const BFSSimulator = () => {
 	// --- Estados del Grafo ---
 	const [nodes, setNodes] = useState([
 		{ id: 0, x: 250, y: 100, label: 'A' },
-		{ id: 1, x: 150, y: 200, label: 'B' },
+		{ id: 1, x: 100, y: 200, label: 'B' },
 		{ id: 2, x: 350, y: 200, label: 'C' },
 		{ id: 3, x: 100, y: 300, label: 'D' },
 		{ id: 4, x: 200, y: 300, label: 'E' },
@@ -27,7 +27,9 @@ const BFSSimulator = () => {
 
 	// --- Estados de la UI / Edición ---
 	const [mode, setMode] = useState('run'); // 'edit' | 'run'
+	const [editTool, setEditTool] = useState('move'); // 'move' | 'connect' | 'erase'
 	const [selectedNode, setSelectedNode] = useState(null); // Para crear aristas
+	const [draggingNode, setDraggingNode] = useState(null); // ID del nodo siendo arrastrado
 	const [startNodeId, setStartNodeId] = useState(0);
 	const speed = 1000; // ms por paso en auto-play
 
@@ -41,6 +43,13 @@ const BFSSimulator = () => {
 		const label = String.fromCharCode(65 + (newId % 26)) + (newId >= 26 ? Math.floor(newId / 26) : '');
 		setNodes([...nodes, { id: newId, x, y, label }]);
 		setLog(prev => [`Nodo ${label} añadido.`, ...prev]);
+	};
+
+	const deleteNode = (id) => {
+		setNodes(nodes.filter(n => n.id !== id));
+		setEdges(edges.filter(e => e[0] !== id && e[1] !== id));
+		if (startNodeId === id) setStartNodeId(nodes.find(n => n.id !== id)?.id || 0);
+		setLog(prev => [`Nodo eliminado.`, ...prev]);
 	};
 
 	const toggleEdge = (sourceId, targetId) => {
@@ -145,29 +154,38 @@ const BFSSimulator = () => {
 
 	const getNodeLabel = (id) => nodes.find(n => n.id === id)?.label || '?';
 
-	const handleCanvasClick = (e) => {
+	// --- Manejo de Eventos del Canvas ---
+
+	const handleCanvasMouseDown = (e) => {
 		if (mode !== 'edit') return;
+		if (e.target.tagName !== 'svg') return; // Solo si clic en fondo
 
-		// FIX: Ensure we are clicking on the SVG background, not a node
-		// We check if the target is the SVG element itself
-		if (e.target.tagName !== 'svg') return;
-
-		const rect = e.target.getBoundingClientRect();
-		const x = e.clientX - rect.left;
-		const y = e.clientY - rect.top;
-		addNode(x, y);
+		if (editTool === 'move') {
+			// Añadir nodo solo si no estamos arrastrando (lógica simplificada: clic simple añade)
+			const rect = e.target.getBoundingClientRect();
+			const x = e.clientX - rect.left;
+			const y = e.clientY - rect.top;
+			addNode(x, y);
+		}
 	};
 
-	const handleNodeClick = (e, id) => {
-		e.stopPropagation(); // Prevent canvas click
+	const handleNodeMouseDown = (e, id) => {
+		e.stopPropagation();
 		if (mode === 'edit') {
-			if (selectedNode === null) {
-				setSelectedNode(id);
-			} else {
-				toggleEdge(selectedNode, id);
-				setSelectedNode(null);
+			if (editTool === 'erase') {
+				deleteNode(id);
+			} else if (editTool === 'connect') {
+				if (selectedNode === null) {
+					setSelectedNode(id);
+				} else {
+					toggleEdge(selectedNode, id);
+					setSelectedNode(null);
+				}
+			} else if (editTool === 'move') {
+				setDraggingNode(id);
 			}
 		} else {
+			// En modo RUN, clic cambia el nodo de inicio
 			if (processedOrder.length === 0 && queue.length === 0) {
 				setStartNodeId(id);
 				setLog(prev => [`Punto de inicio cambiado a ${getNodeLabel(id)}.`, ...prev]);
@@ -175,9 +193,27 @@ const BFSSimulator = () => {
 		}
 	};
 
+	const handleMouseMove = (e) => {
+		if (draggingNode !== null && mode === 'edit') {
+			const rect = svgRef.current.getBoundingClientRect();
+			const x = e.clientX - rect.left;
+			const y = e.clientY - rect.top;
+
+			setNodes(nodes.map(n => n.id === draggingNode ? { ...n, x, y } : n));
+		}
+	};
+
+	const handleMouseUp = () => {
+		setDraggingNode(null);
+	};
+
 	return (
-		<div className="flex flex-col h-screen text-slate-900 font-sans bg-slate-50">
-			{/* Header - Material 3 Surface */}
+		<div
+			className="flex flex-col h-screen text-slate-900 font-sans bg-slate-50"
+			onMouseMove={handleMouseMove}
+			onMouseUp={handleMouseUp}
+		>
+			{/* Header */}
 			<header className="bg-white px-6 py-4 flex justify-between items-center shadow-sm z-30 relative">
 				<div className="flex items-center gap-4">
 					<div className="p-2.5 bg-indigo-100 text-indigo-700 rounded-xl">
@@ -192,7 +228,7 @@ const BFSSimulator = () => {
 				{/* Mode Switcher */}
 				<div className="flex bg-slate-100 p-1 rounded-full border border-slate-200">
 					<button
-						onClick={() => { setMode('run'); setSelectedNode(null); }}
+						onClick={() => { setMode('run'); setSelectedNode(null); setDraggingNode(null); }}
 						className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-2 ${mode === 'run' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
 					>
 						<Play className="w-4 h-4" /> Ejecutar
@@ -214,7 +250,7 @@ const BFSSimulator = () => {
 					{/* Grid Background */}
 					<div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
-					{/* Legend - Floating Card */}
+					{/* Legend */}
 					<div className="absolute top-6 left-6 bg-white/90 p-4 rounded-2xl shadow-md border border-slate-100 backdrop-blur-sm z-10 pointer-events-none">
 						<h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Leyenda</h3>
 						<div className="space-y-2.5">
@@ -225,17 +261,43 @@ const BFSSimulator = () => {
 						</div>
 					</div>
 
+					{/* Edit Toolbar (Floating) */}
 					{mode === 'edit' && (
-						<div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-6 py-3 rounded-full shadow-lg text-sm z-10 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 pointer-events-none">
-							<Info className="w-5 h-5 text-indigo-200" />
-							<span>Clic en vacío para <strong>crear</strong>. Clic en dos nodos para <strong>conectar</strong>.</span>
+						<div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white px-2 py-2 rounded-full shadow-xl border border-slate-200 z-10 flex items-center gap-1 animate-in fade-in slide-in-from-bottom-4">
+							<button
+								onClick={() => setEditTool('move')}
+								className={`p-3 rounded-full transition-colors ${editTool === 'move' ? 'bg-indigo-100 text-indigo-600' : 'text-slate-400 hover:bg-slate-50'}`}
+								title="Mover / Crear"
+							>
+								<Move className="w-5 h-5" />
+							</button>
+							<button
+								onClick={() => setEditTool('connect')}
+								className={`p-3 rounded-full transition-colors ${editTool === 'connect' ? 'bg-indigo-100 text-indigo-600' : 'text-slate-400 hover:bg-slate-50'}`}
+								title="Conectar"
+							>
+								<Activity className="w-5 h-5" />
+							</button>
+							<button
+								onClick={() => setEditTool('erase')}
+								className={`p-3 rounded-full transition-colors ${editTool === 'erase' ? 'bg-red-100 text-red-600' : 'text-slate-400 hover:bg-slate-50'}`}
+								title="Borrar"
+							>
+								<Eraser className="w-5 h-5" />
+							</button>
+							<div className="w-px h-6 bg-slate-200 mx-1"></div>
+							<div className="px-3 text-xs text-slate-500 font-medium">
+								{editTool === 'move' && "Arrastra para mover. Clic en fondo para crear."}
+								{editTool === 'connect' && "Clic en dos nodos para conectar."}
+								{editTool === 'erase' && "Clic en un nodo para borrar."}
+							</div>
 						</div>
 					)}
 
 					<svg
 						ref={svgRef}
 						className="w-full h-full cursor-crosshair touch-none"
-						onClick={handleCanvasClick}
+						onMouseDown={handleCanvasMouseDown}
 					>
 						{/* Edges */}
 						{edges.map(([source, target], i) => {
@@ -249,7 +311,7 @@ const BFSSimulator = () => {
 									x2={tNode.x} y2={tNode.y}
 									stroke="#94a3b8"
 									strokeWidth="2"
-									className="transition-all duration-300"
+									className="transition-all duration-300 pointer-events-none"
 								/>
 							);
 						})}
@@ -292,8 +354,8 @@ const BFSSimulator = () => {
 							return (
 								<g
 									key={node.id}
-									onClick={(e) => handleNodeClick(e, node.id)}
-									className="cursor-pointer transition-all duration-300 ease-out hover:scale-105"
+									onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
+									className={`transition-all duration-300 ease-out ${mode === 'edit' && editTool === 'move' ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
 									style={{ transformOrigin: `${node.x}px ${node.y}px` }}
 								>
 									<circle
@@ -338,10 +400,10 @@ const BFSSimulator = () => {
 								onClick={() => setIsRunning(!isRunning)}
 								disabled={isFinished || mode === 'edit'}
 								className={`flex-1 py-2.5 rounded-xl flex items-center justify-center gap-2 font-bold transition-all duration-200 shadow-sm ${isFinished
-										? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-										: isRunning
-											? 'bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200'
-											: 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-md'
+									? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+									: isRunning
+										? 'bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200'
+										: 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-md'
 									}`}
 							>
 								{isRunning ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
