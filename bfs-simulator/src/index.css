@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@layer base {
+	body {
+		@apply bg-slate-50 text-slate-900 antialiased;
+		font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+	}
+}
+
+/* Custom Scrollbar for Material Design */
+::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+::-webkit-scrollbar-track {
+	@apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	@apply bg-slate-300 rounded-full hover:bg-slate-400;
+}
