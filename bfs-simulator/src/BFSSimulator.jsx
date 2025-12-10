@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, SkipForward, RotateCcw, MousePointer2, Trash2, Info, ArrowRight, Activity, Zap, Eraser, Move } from 'lucide-react';
+import { Play, Pause, SkipForward, RotateCcw, MousePointer2, Trash2, Info, ArrowRight, Activity, Zap, Eraser, Move, HardDrive, Save, Download } from 'lucide-react';
 
 const BFSSimulator = () => {
 	// --- Estados del Grafo ---
@@ -17,13 +17,57 @@ const BFSSimulator = () => {
 	]);
 
 	// --- Estados del Algoritmo ---
+	const [algorithm, setAlgorithm] = useState('BFS'); // 'BFS' | 'DFS'
 	const [queue, setQueue] = useState([]);
 	const [visited, setVisited] = useState(new Set());
 	const [processedOrder, setProcessedOrder] = useState([]);
 	const [currentNode, setCurrentNode] = useState(null);
 	const [isRunning, setIsRunning] = useState(false);
 	const [isFinished, setIsFinished] = useState(false);
-	const [log, setLog] = useState(["Bienvenido al simulador BFS."]);
+	const [log, setLog] = useState(["Bienvenido al simulador."]);
+
+	// --- Estados de la Memoria ---
+	const [memoryBanks, setMemoryBanks] = useState([null, null, null]);
+
+	useEffect(() => {
+		const saved = localStorage.getItem('bfs_sim_banks');
+		if (saved) {
+			try {
+				setMemoryBanks(JSON.parse(saved));
+			} catch (e) {
+				console.error("Error loading memory banks", e);
+			}
+		}
+	}, []);
+
+	const saveToBank = (slot) => {
+		const newBanks = [...memoryBanks];
+		newBanks[slot] = {
+			nodes: [...nodes],
+			edges: [...edges],
+			date: new Date().toLocaleTimeString()
+		};
+		setMemoryBanks(newBanks);
+		localStorage.setItem('bfs_sim_banks', JSON.stringify(newBanks));
+		setLog(prev => [`Grafo guardado en Banco ${slot + 1}.`, ...prev]);
+	};
+
+	const loadFromBank = (slot) => {
+		const bank = memoryBanks[slot];
+		if (!bank) return;
+		resetAlgorithm();
+		setNodes(bank.nodes);
+		setEdges(bank.edges);
+		setLog(prev => [`Grafo cargado desde Banco ${slot + 1}.`, ...prev]);
+	};
+
+	const deleteBank = (slot) => {
+		const newBanks = [...memoryBanks];
+		newBanks[slot] = null;
+		setMemoryBanks(newBanks);
+		localStorage.setItem('bfs_sim_banks', JSON.stringify(newBanks));
+		setLog(prev => [`Banco ${slot + 1} borrado.`, ...prev]);
+	};
 
 	// --- Estados de la UI / Edición ---
 	const [mode, setMode] = useState('run'); // 'edit' | 'run'
@@ -126,11 +170,25 @@ const BFSSimulator = () => {
 				const newVisited = new Set(visited);
 				unvisitedNeighbors.forEach(n => newVisited.add(n));
 				setVisited(newVisited);
-
-				setQueue([...restQueue, ...unvisitedNeighbors]);
-
-				const labels = unvisitedNeighbors.map(id => getNodeLabel(id)).join(", ");
-				setLog(prev => [`Explorando ${getNodeLabel(current)}: Vecinos encontrados (${labels}) -> A la cola.`, ...prev]);
+				// Lógica de Encolado (BFS vs DFS)
+				if (algorithm === 'BFS') {
+					// BFS: FIFO - Añadir al final
+					setQueue([...restQueue, ...unvisitedNeighbors]);
+					const labels = unvisitedNeighbors.map(id => getNodeLabel(id)).join(", ");
+					setLog(prev => [`Explorando ${getNodeLabel(current)}: Vecinos (${labels}) -> A la cola.`, ...prev]);
+				} else {
+					// DFS: LIFO - Añadir al principio (Stack)
+					// Invertimos unvisitedNeighbors para que el primero (menor ID) sea el primero en ser procesado si se sacan del principio
+					// Si restQueue es [TOP ... BOTTOM]
+					// Queremos poner los vecinos al TOP.
+					// Si tenemos A -> B, C. Stack: [B, C]. Pop B. Stack: [C].
+					// Queremos visitar B antes que C.
+					// Con shift() extraemos el primer elemento.
+					// Entonces el array debe ser [TOP, ..., BOTTOM].
+					setQueue([...unvisitedNeighbors, ...restQueue]);
+					const labels = unvisitedNeighbors.map(id => getNodeLabel(id)).join(", ");
+					setLog(prev => [`Explorando ${getNodeLabel(current)}: Vecinos (${labels}) -> A la pila.`, ...prev]);
+				}
 			} else {
 				setLog(prev => [`Explorando ${getNodeLabel(current)}: Sin vecinos nuevos.`, ...prev]);
 			}
@@ -220,9 +278,27 @@ const BFSSimulator = () => {
 						<Activity className="w-6 h-6" />
 					</div>
 					<div>
-						<h1 className="text-xl font-medium text-slate-900">Simulador BFS</h1>
-						<p className="text-sm text-slate-500">Visualizador de Algoritmos</p>
+						<h1 className="text-xl font-medium text-slate-900">Simulador {algorithm}</h1>
+						<p className="text-sm text-slate-500">Visualizador de Grafos</p>
 					</div>
+				</div>
+
+				{/* Algorithm Switcher */}
+				<div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 mx-4">
+					<button
+						onClick={() => { setAlgorithm('BFS'); resetAlgorithm(); }}
+						className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${algorithm === 'BFS' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+						disabled={isRunning || queue.length > 0 || processedOrder.length > 0}
+					>
+						BFS
+					</button>
+					<button
+						onClick={() => { setAlgorithm('DFS'); resetAlgorithm(); }}
+						className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${algorithm === 'DFS' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+						disabled={isRunning || queue.length > 0 || processedOrder.length > 0}
+					>
+						DFS
+					</button>
 				</div>
 
 				{/* Mode Switcher */}
@@ -435,6 +511,52 @@ const BFSSimulator = () => {
 						</div>
 					</div>
 
+					{/* Memory Banks */}
+					<div className="px-6 py-4 border-b border-slate-100 bg-white">
+						<h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+							<HardDrive className="w-4 h-4" /> Bancos de Memoria
+						</h2>
+						<div className="grid grid-cols-1 gap-2">
+							{memoryBanks.map((bank, i) => (
+								<div key={i} className="flex items-center justify-between bg-slate-50 border border-slate-200 p-2 rounded-lg group hover:border-indigo-200 transition-colors">
+									<div className="flex items-center gap-2 overflow-hidden">
+										<div className={`w-2 h-2 rounded-full shrink-0 ${bank ? 'bg-emerald-500' : 'bg-slate-300'}`}></div>
+										<span className="text-xs font-medium text-slate-600 truncate">
+											{bank ? `Banco ${i + 1} (${bank.date})` : `Banco ${i + 1} (Vacío)`}
+										</span>
+									</div>
+									<div className="flex gap-1 shrink-0">
+										<button
+											onClick={() => saveToBank(i)}
+											className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+											title="Guardar"
+										>
+											<Save size={14} />
+										</button>
+										{bank && (
+											<>
+												<button
+													onClick={() => loadFromBank(i)}
+													className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+													title="Cargar"
+												>
+													<Download size={14} />
+												</button>
+												<button
+													onClick={() => deleteBank(i)}
+													className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+													title="Borrar"
+												>
+													<Trash2 size={14} />
+												</button>
+											</>
+										)}
+									</div>
+								</div>
+							))}
+						</div>
+					</div>
+
 					{/* Data Visualization */}
 					<div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar bg-white">
 
@@ -442,22 +564,24 @@ const BFSSimulator = () => {
 						<div className="animate-in fade-in slide-in-from-right-4 duration-500">
 							<div className="flex justify-between items-center mb-3">
 								<h3 className="font-bold text-slate-800 flex items-center gap-2 text-sm">
-									<div className="w-2 h-2 rounded-full bg-amber-400"></div> Cola (Queue)
+									<div className="w-2 h-2 rounded-full bg-amber-400"></div> {algorithm === 'BFS' ? 'Cola (Queue)' : 'Pila (Stack)'}
 								</h3>
-								<span className="text-[10px] text-slate-500 font-mono bg-slate-100 px-2 py-0.5 rounded border border-slate-200">FIFO</span>
+								<span className="text-[10px] text-slate-500 font-mono bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+									{algorithm === 'BFS' ? 'FIFO' : 'LIFO'}
+								</span>
 							</div>
 							<div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 min-h-[70px] flex items-center gap-3 overflow-x-auto shadow-inner">
 								{queue.length === 0 ? (
-									<span className="text-slate-400 text-sm italic w-full text-center">Cola vacía...</span>
+									<span className="text-slate-400 text-sm italic w-full text-center">{algorithm === 'BFS' ? 'Cola vacía...' : 'Pila vacía...'}</span>
 								) : (
 									<>
-										<span className="text-[10px] font-bold text-slate-400 mr-1 tracking-tighter">SALIDA</span>
+										<span className="text-[10px] font-bold text-slate-400 mr-1 tracking-tighter">{algorithm === 'BFS' ? 'SALIDA' : 'TOP'}</span>
 										{queue.map((id, idx) => (
 											<div key={`${id}-${idx}`} className="w-10 h-10 flex-shrink-0 bg-white border border-amber-200 rounded-lg flex items-center justify-center font-bold text-amber-600 shadow-sm animate-in zoom-in duration-300">
 												{getNodeLabel(id)}
 											</div>
 										))}
-										<span className="text-[10px] font-bold text-slate-400 ml-1 tracking-tighter">ENTRADA</span>
+										<span className="text-[10px] font-bold text-slate-400 ml-1 tracking-tighter">{algorithm === 'BFS' ? 'ENTRADA' : 'BOTTOM'}</span>
 									</>
 								)}
 							</div>
