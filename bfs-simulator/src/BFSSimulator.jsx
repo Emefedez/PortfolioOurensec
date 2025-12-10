@@ -24,7 +24,13 @@ const BFSSimulator = () => {
 	const [currentNode, setCurrentNode] = useState(null);
 	const [isRunning, setIsRunning] = useState(false);
 	const [isFinished, setIsFinished] = useState(false);
+
 	const [log, setLog] = useState(["Bienvenido al simulador."]);
+
+	// --- Estados de Nuevas Funcionalidades (Iter 2) ---
+	const [stepCount, setStepCount] = useState(0);
+	const [parents, setParents] = useState({}); // { childId: parentId }
+	const [hoverPath, setHoverPath] = useState([]); // Arreglo de IDs para iluminar ruta
 
 	// --- Estados de la Memoria ---
 	const [memoryBanks, setMemoryBanks] = useState([null, null, null]);
@@ -118,7 +124,12 @@ const BFSSimulator = () => {
 			if (e[0] === id) neighbors.push(e[1]);
 			if (e[1] === id) neighbors.push(e[0]);
 		});
-		return neighbors.sort((a, b) => a - b);
+		// Ordenar alfabéticamente por label para desempate
+		return neighbors.sort((a, b) => {
+			const labelA = nodes.find(n => n.id === a)?.label || '';
+			const labelB = nodes.find(n => n.id === b)?.label || '';
+			return labelA.localeCompare(labelB);
+		});
 	};
 
 	const resetAlgorithm = () => {
@@ -128,6 +139,10 @@ const BFSSimulator = () => {
 		setCurrentNode(null);
 		setIsFinished(false);
 		setIsRunning(false);
+
+		setStepCount(0);
+		setParents({});
+		setHoverPath([]);
 		if (timerRef.current) clearInterval(timerRef.current);
 		setLog(prev => ["Algoritmo reiniciado.", ...prev]);
 	};
@@ -153,6 +168,9 @@ const BFSSimulator = () => {
 			setQueue([start]);
 			setVisited(new Set([start]));
 			setLog(prev => [`Inicio: Agregamos nodo ${getNodeLabel(start)} a la cola y lo marcamos como visitado.`, ...prev]);
+
+			setStepCount(1);
+			setParents({ [start]: null }); // Nodo inicio no tiene padre
 			return;
 		}
 
@@ -169,7 +187,17 @@ const BFSSimulator = () => {
 			if (unvisitedNeighbors.length > 0) {
 				const newVisited = new Set(visited);
 				unvisitedNeighbors.forEach(n => newVisited.add(n));
+
+				const newParents = { ...parents };
+				unvisitedNeighbors.forEach(n => {
+					newVisited.add(n);
+					// Registrar padre. Para BFS es el nodo actual.
+					// Para DFS, también es el actual (porque lo descubrimos desde él).
+					// OJO: En BFS es la primera vez que se visita -> se define el padre óptimo en grafo no ponderado.
+					newParents[n] = current;
+				});
 				setVisited(newVisited);
+				setParents(newParents);
 				// Lógica de Encolado (BFS vs DFS)
 				if (algorithm === 'BFS') {
 					// BFS: FIFO - Añadir al final
@@ -187,6 +215,7 @@ const BFSSimulator = () => {
 			} else {
 				setLog(prev => [`Explorando ${getNodeLabel(current)}: Sin vecinos nuevos.`, ...prev]);
 			}
+			setStepCount(prev => prev + 1);
 		} else {
 			setIsFinished(true);
 			setCurrentNode(null);
@@ -258,6 +287,23 @@ const BFSSimulator = () => {
 
 	const handleMouseUp = () => {
 		setDraggingNode(null);
+	};
+
+	const handleNodeHover = (id) => {
+		if (!isFinished || mode !== 'run') return;
+
+		// Trazar ruta desde id hasta inicio usando parents
+		const path = [];
+		let curr = id;
+		while (curr !== null && curr !== undefined) {
+			path.push(curr);
+			curr = parents[curr];
+		}
+		setHoverPath(path);
+	};
+
+	const handleNodeLeave = () => {
+		setHoverPath([]);
 	};
 
 	return (
@@ -380,9 +426,14 @@ const BFSSimulator = () => {
 									key={i}
 									x1={sNode.x} y1={sNode.y}
 									x2={tNode.x} y2={tNode.y}
-									stroke="#94a3b8"
-									strokeWidth="2"
+									stroke={hoverPath.includes(source) && hoverPath.includes(target) &&
+										(parents[source] === target || parents[target] === source)
+										? "#f43f5e" : "#94a3b8"}
+									strokeWidth={hoverPath.includes(source) && hoverPath.includes(target) &&
+										(parents[source] === target || parents[target] === source)
+										? "4" : "2"}
 									className="transition-all duration-300 pointer-events-none"
+									strokeLinecap="round"
 								/>
 							);
 						})}
@@ -400,8 +451,16 @@ const BFSSimulator = () => {
 							let strokeWidth = "2";
 							let textColor = "#475569"; // slate-600
 							let shadow = "";
+							let scale = "scale-100";
 
-							if (isProcessed) {
+							const isHoverPath = hoverPath.includes(node.id);
+
+							if (isHoverPath) {
+								stroke = "#f43f5e"; // rose-500
+								strokeWidth = "4";
+								shadow = "drop-shadow(0 0 10px rgba(244, 63, 94, 0.6))";
+								scale = "scale-110";
+							} else if (isProcessed) {
 								fill = "#dcfce7"; // emerald-100
 								stroke = "#22c55e"; // emerald-500
 								textColor = "#15803d"; // emerald-700
@@ -426,7 +485,9 @@ const BFSSimulator = () => {
 								<g
 									key={node.id}
 									onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
-									className={`transition-all duration-300 ease-out ${mode === 'edit' && editTool === 'move' ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
+									onMouseEnter={() => handleNodeHover(node.id)}
+									onMouseLeave={handleNodeLeave}
+									className={`transition-all duration-300 ease-out ${mode === 'edit' && editTool === 'move' ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${scale}`}
 									style={{ transformOrigin: `${node.x}px ${node.y}px` }}
 								>
 									<circle
@@ -442,6 +503,7 @@ const BFSSimulator = () => {
 										textAnchor="middle"
 										fill={textColor}
 										className="font-bold text-sm select-none pointer-events-none"
+										style={{ fontWeight: isHoverPath ? '900' : 'bold' }}
 									>
 										{node.label}
 									</text>
@@ -504,16 +566,20 @@ const BFSSimulator = () => {
 								<Trash2 size={14} /> Limpiar
 							</button>
 						</div>
+						<div className="flex justify-center items-center gap-2 mt-4 pt-4 border-t border-slate-100 text-xs font-mono text-slate-500">
+							<span>Pasos Realizados:</span>
+							<span className="font-bold text-indigo-600 text-lg">{stepCount}</span>
+						</div>
 					</div>
 
-					{/* Memory Banks */}
-					<div className="px-6 py-4 border-b border-slate-100 bg-white">
+					{/* Memory Banks moved to bottom */}
+					<div className="mt-auto px-6 py-4 border-t border-slate-100 bg-slate-50">
 						<h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
 							<HardDrive className="w-4 h-4" /> Bancos de Memoria
 						</h2>
 						<div className="grid grid-cols-1 gap-2">
 							{memoryBanks.map((bank, i) => (
-								<div key={i} className="flex items-center justify-between bg-slate-50 border border-slate-200 p-2 rounded-lg group hover:border-indigo-200 transition-colors">
+								<div key={i} className="flex items-center justify-between bg-white border border-slate-200 p-2 rounded-lg group hover:border-indigo-200 transition-colors shadow-sm">
 									<div className="flex items-center gap-2 overflow-hidden">
 										<div className={`w-2 h-2 rounded-full shrink-0 ${bank ? 'bg-emerald-500' : 'bg-slate-300'}`}></div>
 										<span className="text-xs font-medium text-slate-600 truncate">
@@ -634,8 +700,8 @@ const BFSSimulator = () => {
 
 					</div>
 				</div>
-			</div>
-		</div>
+			</div >
+		</div >
 	);
 };
 
