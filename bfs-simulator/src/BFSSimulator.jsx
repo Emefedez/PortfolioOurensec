@@ -178,14 +178,9 @@ const BFSSimulator = () => {
 					setLog(prev => [`Explorando ${getNodeLabel(current)}: Vecinos (${labels}) -> A la cola.`, ...prev]);
 				} else {
 					// DFS: LIFO - Añadir al principio (Stack)
-					// Invertimos unvisitedNeighbors para que el primero (menor ID) sea el primero en ser procesado si se sacan del principio
-					// Si restQueue es [TOP ... BOTTOM]
-					// Queremos poner los vecinos al TOP.
-					// Si tenemos A -> B, C. Stack: [B, C]. Pop B. Stack: [C].
-					// Queremos visitar B antes que C.
-					// Con shift() extraemos el primer elemento.
-					// Entonces el array debe ser [TOP, ..., BOTTOM].
-					setQueue([...unvisitedNeighbors, ...restQueue]);
+					// Invertimos unvisitedNeighbors para que el último vecino añadido (mayor layout/ID) sea el primero en procesarse (Top of Stack)
+					// Comportamiento estándar de Stack: Push A, Push B -> Pop B.
+					setQueue([...unvisitedNeighbors.reverse(), ...restQueue]);
 					const labels = unvisitedNeighbors.map(id => getNodeLabel(id)).join(", ");
 					setLog(prev => [`Explorando ${getNodeLabel(current)}: Vecinos (${labels}) -> A la pila.`, ...prev]);
 				}
