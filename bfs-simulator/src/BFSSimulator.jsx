@@ -208,7 +208,7 @@ const BFSSimulator = () => {
 			clearInterval(timerRef.current);
 		}
 		return () => clearInterval(timerRef.current);
-	}, [isRunning, isFinished, queue, visited, currentNode, processedOrder]);
+	}, [isRunning, isFinished, queue, visited, currentNode, processedOrder, algorithm]);
 
 	const getNodeLabel = (id) => nodes.find(n => n.id === id)?.label || '?';
 
