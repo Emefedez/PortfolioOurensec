@@ -5,7 +5,7 @@
     <title>Máquina Sencilla - MS Clon GUI Portable</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eef2f5; margin: 0; padding: 10px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
-        .toolbar { background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 5px; margin-bottom: 10px; display: flex; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex-wrap: wrap; align-items: center;}
+        .toolbar { background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 5px; margin-bottom: 5px; display: flex; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex-wrap: wrap; align-items: center; flex: none;}
         button { background: #f8f9fa; border: 1px solid #c0c0c0; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 14px; transition: 0.2s; }
         button:hover { background: #e2e6ea; border-color: #adb5bd; }
         .toolbar-group { display: flex; gap: 5px; border-right: 2px solid #ddd; padding-right: 15px; align-items: center;}
@@ -13,10 +13,17 @@
         input[type="number"], input[type="text"] { width: 60px; padding: 5px; font-family: monospace; border: 1px solid #ccc; border-radius: 3px; text-align: center; }
         label { font-weight: bold; font-size: 13px; margin-right: 5px; }
         
-        .main { display: flex; flex: 2; gap: 10px; overflow: hidden; min-height: 50vh;}
-        .log-panel { flex: 1; background: #1e1e1e; color: #d4d4d4; font-family: 'Courier New', Courier, monospace; font-size: 13px; overflow-y: auto; border-radius: 5px; border: 1px solid #ccc; margin-top: 10px; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); white-space: pre-wrap; word-wrap: break-word;}
+        .workspace { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
         
-        .panel { background: #fff; border: 1px solid #ccc; border-radius: 5px; display: flex; flex-direction: column; flex: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow: hidden; }
+        .top-section { display: flex; flex: 2; overflow: hidden; min-height: 200px; }
+        .resizer-x { width: 8px; cursor: col-resize; background: transparent; transition: background 0.2s; margin: 0 2px; }
+        .resizer-x:hover, .resizer-x.active { background: #bbb; border-radius: 4px; }
+        .resizer-y { height: 8px; cursor: row-resize; background: transparent; transition: background 0.2s; margin: 2px 0; flex: none; }
+        .resizer-y:hover, .resizer-y.active { background: #bbb; border-radius: 4px; }
+        
+        .log-panel { flex: none; height: 150px; background: #1e1e1e; color: #d4d4d4; font-family: 'Courier New', Courier, monospace; font-size: 13px; overflow-y: auto; border-radius: 5px; border: 1px solid #ccc; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); white-space: pre-wrap; word-wrap: break-word;}
+        
+        .panel { background: #fff; border: 1px solid #ccc; border-radius: 5px; display: flex; flex-direction: column; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow: hidden; }
         .panel-header { background: #f1f1f1; padding: 8px 15px; font-weight: bold; border-bottom: 1px solid #ccc; margin: 0; font-size: 14px; display: flex; justify-content: space-between;}
         
         /* Syntax highlighting setup */
@@ -50,15 +57,16 @@
 
 <div class="toolbar">
     <div class="toolbar-group">
-        <button onclick="document.getElementById('file-input').click()">📂 Cargar .TXT</button>
-        <input type="file" id="file-input" style="display:none" onchange="loadFile(event)" accept=".txt,.asm">
+        <button onclick="document.getElementById('file-input').click()">📂 Cargar Fichero</button>
+        <input type="file" id="file-input" style="display:none" onchange="loadFile(event)" accept=".txt,.asm,.ms,.MS">
         <button onclick="saveFileTxt()">💾 Guardar .TXT</button>
         <button onclick="saveFileMS()" style="background: #e3f2fd; border-color: #b6d4fe;">💾 Exportar .MS (DOSBox)</button>
     </div>
     <div class="toolbar-group">
         <button onclick="assemble()" style="background: #d1e7dd; border-color: #a3cfbb;">⚙️ Ensamblar</button>
-        <button onclick="step()">👣 Paso</button>
-        <button onclick="run()">▶️ GO</button>
+        <button onclick="step()" id="btn-step">👣 Paso</button>
+        <button onclick="run()" id="btn-run">▶️ GO</button>
+        <button onclick="stopRun()" id="btn-stop" style="display:none; background: #f8d7da; border-color: #dc3545;">🛑 Frenar</button>
         <button onclick="reset()">🔄 Reset</button>
     </div>
     <div class="toolbar-group">
@@ -69,12 +77,13 @@
     </div>
 </div>
 
-<div class="main">
-    <div class="panel">
-        <div class="panel-header">EDITOR DE CÓDIGO</div>
-        <div class="editor-container">
-            <div id="editor-backdrop" class="editor-backdrop"></div>
-            <textarea id="editor" class="editor-textarea" spellcheck="false" oninput="handleEditorInput()" onscroll="handleEditorScroll()">DVDO:000A
+<div class="workspace">
+    <div class="top-section" id="top-section">
+        <div class="panel" id="left-panel" style="width: 45%; flex: none;">
+            <div class="panel-header">EDITOR DE CÓDIGO</div>
+            <div class="editor-container">
+                <div id="editor-backdrop" class="editor-backdrop"></div>
+                <textarea id="editor" class="editor-textarea" spellcheck="false" oninput="handleEditorInput()" onscroll="handleEditorScroll()">DVDO:000A
 DSOR:0005 ;el de arriba entre el de abajo
 
 Q:0000
@@ -126,38 +135,77 @@ BEQ FIN
 
 FIN:
 BEQ FIN;</textarea>
+            </div>
+        </div>
+        
+        <div class="resizer-x" id="drag-x"></div>
+        
+        <div class="panel" id="right-panel" style="flex: 1;">
+            <div class="panel-header">ESTADO DE LA MÁQUINA</div>
+            <div class="registers">
+                <div class="reg">PC: <span id="reg-pc">0</span></div>
+                <div class="reg reg-fz">FZ: <span id="reg-fz">0</span></div>
+            </div>
+            <div class="memory-wrap">
+                <table id="mem-table">
+                    <thead>
+                        <tr>
+                            <th width="80">Dir</th>
+                            <th width="100">Hex</th>
+                            <th>Instrucción / Mnemónico</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- JS rellena esto -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
     
-    <div class="panel">
-        <div class="panel-header">ESTADO DE LA MÁQUINA</div>
-        <div class="registers">
-            <div class="reg">PC: <span id="reg-pc">0</span></div>
-            <div class="reg reg-fz">FZ: <span id="reg-fz">0</span></div>
-        </div>
-        <div class="memory-wrap">
-            <table id="mem-table">
-                <thead>
-                    <tr>
-                        <th width="80">Dir</th>
-                        <th width="100">Hex</th>
-                        <th>Instrucción / Mnemónico</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- JS rellena esto -->
-                </tbody>
-            </table>
-        </div>
+    <div class="resizer-y" id="drag-y"></div>
+
+    <div class="log-panel" id="log-panel">
+        <div style="font-weight: bold; margin-bottom: 5px; color: #fff;">[LOG DE EJECUCIÓN]</div>
+        <div id="log-content"></div>
     </div>
 </div>
 
-<div class="log-panel" id="log-panel">
-    <div style="font-weight: bold; margin-bottom: 5px; color: #fff;">[LOG DE EJECUCIÓN]</div>
-    <div id="log-content"></div>
-</div>
-
 <script>
+    // --- RESIZER LOGIC ---
+    let isDraggingX = false;
+    let isDraggingY = false;
+
+    document.getElementById('drag-x').addEventListener('mousedown', function(e) {
+        isDraggingX = true;
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+    
+    document.getElementById('drag-y').addEventListener('mousedown', function(e) {
+        isDraggingY = true;
+        document.body.style.cursor = 'row-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (isDraggingX) {
+            let leftPanel = document.getElementById('left-panel');
+            leftPanel.style.width = e.clientX + 'px';
+        } else if (isDraggingY) {
+            let topSection = document.getElementById('top-section');
+            topSection.style.height = (e.clientY - topSection.getBoundingClientRect().top) + 'px';
+            topSection.style.flex = 'none';
+        }
+    });
+
+    document.addEventListener('mouseup', function(e) {
+        isDraggingX = false;
+        isDraggingY = false;
+        document.body.style.cursor = 'default';
+    });
+    // ----------------------------
+
     const MEM_SIZE = 128;
     let mem = new Array(MEM_SIZE).fill(0);
     let mnemonics = new Array(MEM_SIZE).fill('');
@@ -168,6 +216,7 @@ BEQ FIN;</textarea>
     let halted = false;
     let currentLabels = {};
     let reverseLabels = {};
+    let isRunning = false;
 
     function logTrace(msg) {
         let content = document.getElementById('log-content');
@@ -192,7 +241,6 @@ BEQ FIN;</textarea>
         for(let i=0; i<lines.length; i++) {
             let line = lines[i];
             
-            // Comment
             let commentIdx = line.indexOf(';');
             let comment = "";
             if (commentIdx !== -1) {
@@ -200,7 +248,6 @@ BEQ FIN;</textarea>
                 line = line.substring(0, commentIdx);
             }
             
-            // Label
             let labelIdx = line.indexOf(':');
             let label = "";
             if (labelIdx !== -1) {
@@ -208,7 +255,6 @@ BEQ FIN;</textarea>
                 line = line.substring(labelIdx + 1);
             }
             
-            // Rest of line parsing
             let words = line.split(/(\s+|,)/);
             let highlightedWords = words.map(w => {
                 if (w.trim() === ',' || w.trim() === '') return w;
@@ -230,7 +276,6 @@ BEQ FIN;</textarea>
             lines[i] = finalLine;
         }
         
-        // Ensure trailing newline renders correctly
         return lines.join('\n') + '\n';
     }
 
@@ -247,6 +292,7 @@ BEQ FIN;</textarea>
     // ----------------------------
 
     function reset() {
+        stopRun();
         mem.fill(0);
         mnemonics.fill('');
         types.fill(0);
@@ -275,6 +321,7 @@ BEQ FIN;</textarea>
     }
 
     function assemble() {
+        stopRun();
         mem.fill(0);
         mnemonics.fill('');
         types.fill(0);
@@ -287,7 +334,6 @@ BEQ FIN;</textarea>
         let labels = {};
         let parsed = [];
         
-        // Pass 1
         let addr = 0;
         for (let rawLine of lines) {
             let line = rawLine.split(';')[0].trim();
@@ -308,7 +354,6 @@ BEQ FIN;</textarea>
         reverseLabels = {};
         for(let k in currentLabels) reverseLabels[currentLabels[k]] = k;
 
-        // Pass 2
         for (let p of parsed) {
             mnemonics[p.addr] = p.line;
             let parts = p.line.toUpperCase().replace(/,/g, ' ').split(/\s+/).filter(x => x);
@@ -381,7 +426,7 @@ BEQ FIN;</textarea>
         if (inst === 0xFFFF || (inst === 0 && mnemonics[pc] === "")) {
             halted = true;
             logTrace(`[HALT] Programa finalizado en PC=${pc}`);
-            alert("Programa finalizado (HALT alcanzado).");
+            if (!isRunning) alert("Programa finalizado (HALT alcanzado).");
             return false;
         }
 
@@ -402,38 +447,61 @@ BEQ FIN;</textarea>
             if (fz) pc = d;
         }
         
-        // Format log state tracking
-        let q_val = currentLabels.hasOwnProperty('Q') ? mem[currentLabels['Q']].toString(16).toUpperCase() : '?';
-        let i_val = currentLabels.hasOwnProperty('I') ? mem[currentLabels['I']].toString(16).toUpperCase() : '?';
-        let resto_val = currentLabels.hasOwnProperty('RESTO') ? mem[currentLabels['RESTO']].toString(16).toUpperCase() : '?';
+        let q_val = currentLabels.hasOwnProperty('Q') ? mem[currentLabels['Q']].toString(16).toUpperCase().padStart(4, '0') : '?';
+        let i_val = currentLabels.hasOwnProperty('I') ? mem[currentLabels['I']].toString(16).toUpperCase().padStart(4, '0') : '?';
+        let resto_val = currentLabels.hasOwnProperty('RESTO') ? mem[currentLabels['RESTO']].toString(16).toUpperCase().padStart(4, '0') : '?';
         
         logTrace(`${lbl_prefix}${mnem} -> FZ=${fz ? 1 : 0}, Q=${q_val}, I=${i_val}, RESTO=${resto_val}`);
 
         document.getElementById('inp-pc').value = pc;
-        updateView();
+        if (!isRunning) updateView(); // Optimización: no actualizar la GUI completa de la tabla en cada paso si está corriendo
         return true;
     }
 
-    function run() {
+    function stopRun() {
+        isRunning = false;
+        document.getElementById('btn-run').style.display = 'inline-block';
+        document.getElementById('btn-step').disabled = false;
+        document.getElementById('btn-stop').style.display = 'none';
+        updateView();
+    }
+
+    async function run() {
+        if (isRunning || halted) return;
+        isRunning = true;
+        
+        document.getElementById('btn-run').style.display = 'none';
+        document.getElementById('btn-step').disabled = true;
+        document.getElementById('btn-stop').style.display = 'inline-block';
+        
         let steps = 0;
-        while (!halted && pc < MEM_SIZE && steps < 5000) {
+        while (isRunning && !halted && pc < MEM_SIZE && steps < 5000) {
             if (pc === breakpoint && steps > 0) {
                 logTrace(`>> BREAKPOINT alcanzado en dir: ${breakpoint}`);
                 break;
             }
+            
             if (!step()) break;
             
             if (pc === breakpoint) {
-                updateView();
                 logTrace(`>> BREAKPOINT alcanzado en dir: ${breakpoint}`);
                 break;
             }
             steps++;
+            
+            // Pausa asíncrona para que la web no se congele y se vea el log en tiempo real
+            // Actualizamos la vista de la tabla cada 10 pasos o al final para que no sea muy lento
+            if (steps % 5 === 0) {
+                updateView();
+            }
+            await new Promise(r => setTimeout(r, 15)); // Retardo de 15ms
         }
-        updateView();
-        if (steps >= 5000) {
+        
+        if (steps >= 5000 && isRunning) {
             logTrace("!! Ejecución detenida: Límite de 5000 pasos alcanzado (posible bucle infinito).");
         }
+        
+        stopRun();
     }
 
     function updateView() {
@@ -479,13 +547,117 @@ BEQ FIN;</textarea>
     function loadFile(event) {
         let file = event.target.files[0];
         if (!file) return;
+        
         let reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById('editor').value = e.target.result;
-            handleEditorInput();
-            document.getElementById('file-input').value = '';
-        };
-        reader.readAsText(file);
+        
+        if (file.name.toUpperCase().endsWith('.MS')) {
+            reader.onload = function(e) {
+                let buf = new Uint8Array(e.target.result);
+                let decompiledText = decompileMS(buf);
+                if (decompiledText !== null) {
+                    document.getElementById('editor').value = decompiledText;
+                    handleEditorInput();
+                    assemble();
+                }
+                document.getElementById('file-input').value = '';
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            reader.onload = function(e) {
+                document.getElementById('editor').value = e.target.result;
+                handleEditorInput();
+                document.getElementById('file-input').value = '';
+            };
+            reader.readAsText(file);
+        }
+    }
+
+    function decompileMS(buf) {
+        if (buf.length < 388) {
+            alert("Archivo .MS inválido o demasiado pequeño.");
+            return null;
+        }
+        
+        let numLabels = buf[0] | (buf[1] << 8);
+        
+        let fileMem = new Array(128).fill(0);
+        let memOffset = 4;
+        for(let i=0; i<128; i++) {
+            fileMem[i] = buf[memOffset + (i*2)] | (buf[memOffset + (i*2) + 1] << 8);
+        }
+        
+        let fileTypes = new Array(128).fill(0);
+        let typesOffset = memOffset + 256;
+        for(let i=0; i<128; i++) {
+            fileTypes[i] = buf[typesOffset + i];
+        }
+        
+        let fileLabels = {};
+        let labelsNameOffset = typesOffset + 128;
+        let labelsPosOffset = labelsNameOffset + (numLabels * 7);
+        
+        for(let i=0; i<numLabels; i++) {
+            if (labelsPosOffset + (i*2) + 1 >= buf.length) break;
+            
+            let pos = buf[labelsPosOffset + (i*2)] | (buf[labelsPosOffset + (i*2) + 1] << 8);
+            
+            let name = "";
+            let pName = labelsNameOffset + (i*7);
+            for(let c=0; c<6; c++) {
+                let charCode = buf[pName + c];
+                if (charCode === 0) break;
+                name += String.fromCharCode(charCode);
+            }
+            fileLabels[pos] = name;
+        }
+        
+        let text = "; Código decompilado de archivo .MS\n\n";
+        for(let i=0; i<128; i++) {
+            if (fileTypes[i] === 0) {
+                if (fileLabels[i]) {
+                    text += fileLabels[i] + ":\n";
+                }
+                continue;
+            }
+            
+            let line = "";
+            if (fileLabels[i]) {
+                if (fileTypes[i] !== 2) text += "\n";
+                line += fileLabels[i] + ":";
+                if (fileTypes[i] !== 2) {
+                    text += line + "\n";
+                    line = "";
+                } else {
+                    line += " ";
+                }
+            }
+            
+            if (fileTypes[i] === 2) {
+                line += "DATA " + fileMem[i].toString(16).toUpperCase().padStart(4, '0');
+            } else if (fileTypes[i] === 1) {
+                let inst = fileMem[i];
+                if (inst === 0xFFFF) {
+                    line += "HALT";
+                } else {
+                    let opcode = (inst & 0xC000) >> 14;
+                    let op1 = (inst & 0x3F80) >> 7;
+                    let op2 = inst & 0x7F;
+                    
+                    let opStr = ["ADD", "CMP", "MOV", "BEQ"][opcode];
+                    let arg1 = fileLabels[op1] ? fileLabels[op1] : op1.toString();
+                    let arg2 = fileLabels[op2] ? fileLabels[op2] : op2.toString();
+                    
+                    if (opcode === 3) {
+                        line += opStr + " " + arg2;
+                    } else {
+                        line += opStr + " " + arg1 + ", " + arg2;
+                    }
+                }
+            }
+            text += line + "\n";
+        }
+        
+        return text.trim();
     }
 
     function saveFileTxt() {
@@ -498,13 +670,6 @@ BEQ FIN;</textarea>
     }
 
     function saveFileMS() {
-        // Formato MS.EXE nativo documentado:
-        // [4 bytes Header]: numLabels (uint16 little endian), 0x00, 0x00
-        // [256 bytes Data]: 128 words, little endian
-        // [128 bytes DataTypes]: 0=vacio, 1=inst, 2=dato
-        // [numLabels * 7 bytes]: Nombres etiquetas (6 char + null)
-        // [numLabels * 2 bytes]: Posiciones (index en memoria, uint16 little endian)
-        
         let activeLabels = [];
         for(let i=0; i<MEM_SIZE; i++) {
             if(reverseLabels[i]) {
@@ -516,36 +681,31 @@ BEQ FIN;</textarea>
         let totalSize = 4 + 256 + 128 + (numLabels * 7) + (numLabels * 2);
         let buf = new Uint8Array(totalSize);
 
-        // Header
         buf[0] = numLabels & 0xFF;
         buf[1] = (numLabels >> 8) & 0xFF;
         buf[2] = 0;
         buf[3] = 0;
 
-        // 1. Memoria (Data)
         let memOffset = 4;
         for(let i=0; i<MEM_SIZE; i++) {
-            buf[memOffset + (i*2)] = mem[i] & 0xFF;         // Low byte
-            buf[memOffset + (i*2) + 1] = (mem[i] >> 8) & 0xFF; // High byte
+            buf[memOffset + (i*2)] = mem[i] & 0xFF;
+            buf[memOffset + (i*2) + 1] = (mem[i] >> 8) & 0xFF;
         }
 
-        // 2. Types
         let typesOffset = memOffset + 256;
         for(let i=0; i<MEM_SIZE; i++) {
             buf[typesOffset + i] = types[i];
         }
 
-        // 3. Etiquetas (Nombres)
         let labelsNameOffset = typesOffset + 128;
         for(let i=0; i<numLabels; i++) {
-            let name = activeLabels[i].name.substring(0, 6); // Max 6 chars
+            let name = activeLabels[i].name.substring(0, 6);
             for(let c=0; c<name.length; c++) {
                 buf[labelsNameOffset + (i*7) + c] = name.charCodeAt(c);
             }
-            buf[labelsNameOffset + (i*7) + name.length] = 0; // Null terminator
+            buf[labelsNameOffset + (i*7) + name.length] = 0;
         }
 
-        // 4. Etiquetas (Posiciones)
         let labelsPosOffset = labelsNameOffset + (numLabels * 7);
         for(let i=0; i<numLabels; i++) {
             let pos = activeLabels[i].pos;
@@ -560,7 +720,6 @@ BEQ FIN;</textarea>
         a.click();
     }
 
-    // Inicializar GUI
     handleEditorInput();
     assemble();
 </script>
