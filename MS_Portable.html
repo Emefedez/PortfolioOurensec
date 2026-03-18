@@ -5,10 +5,10 @@
     <title>Máquina Sencilla - MS Clon GUI Portable</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eef2f5; margin: 0; padding: 10px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
-        .toolbar { background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 5px; margin-bottom: 5px; display: flex; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex-wrap: wrap; align-items: center; flex: none;}
-        button { background: #f8f9fa; border: 1px solid #c0c0c0; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 14px; transition: 0.2s; }
+        .toolbar { background: #fff; border: 1px solid #ccc; padding: 6px 10px; border-radius: 5px; margin-bottom: 5px; display: flex; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); align-items: center; flex: none;}
+        button { background: #f8f9fa; border: 1px solid #c0c0c0; padding: 5px 12px; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 13px; transition: 0.2s; }
         button:hover { background: #e2e6ea; border-color: #adb5bd; }
-        .toolbar-group { display: flex; gap: 5px; border-right: 2px solid #ddd; padding-right: 15px; align-items: center;}
+        .toolbar-group { display: flex; gap: 5px; border-right: 2px solid #ddd; padding-right: 10px; align-items: center;}
         .toolbar-group:last-child { border-right: none; }
         input[type="number"], input[type="text"] { width: 60px; padding: 5px; font-family: monospace; border: 1px solid #ccc; border-radius: 3px; text-align: center; }
         label { font-weight: bold; font-size: 13px; margin-right: 5px; }
@@ -60,6 +60,7 @@
         <button onclick="document.getElementById('file-input').click()">📂 Cargar Fichero</button>
         <input type="file" id="file-input" style="display:none" onchange="loadFile(event)" accept=".txt,.asm,.ms,.MS">
         <button onclick="saveFileTxt()">💾 Guardar .TXT</button>
+        <button onclick="saveFileTxtClean()">📄 .TXT (Sin Comentarios)</button>
         <button onclick="saveFileMS()" style="background: #e3f2fd; border-color: #b6d4fe;">💾 Exportar .MS (DOSBox)</button>
     </div>
     <div class="toolbar-group">
@@ -257,7 +258,10 @@ BEQ FIN;</textarea>
             
             let words = line.split(/(\s+|,)/);
             let highlightedWords = words.map(w => {
-                if (w.trim() === ',' || w.trim() === '') return w;
+                if (w === '') return w;
+                if (w.trim() === '') return w; // keep spaces transparent/normal
+                if (w === ',') return `<span class="hl-text">${w}</span>`;
+                
                 let upper = w.toUpperCase();
                 if (['ADD','CMP','MOV','BEQ','HALT','STOP','DATA'].includes(upper)) {
                     return `<span class="hl-inst">${w}</span>`;
@@ -290,6 +294,16 @@ BEQ FIN;</textarea>
         document.getElementById('editor-backdrop').scrollLeft = document.getElementById('editor').scrollLeft;
     }
     // ----------------------------
+
+    function toSigned(val) {
+        return val >= 0x8000 ? val - 0x10000 : val;
+    }
+
+    function getDisplayValue(val) {
+        let hex = val.toString(16).toUpperCase().padStart(4, '0');
+        let dec = toSigned(val);
+        return `${hex} (${dec})`;
+    }
 
     function reset() {
         stopRun();
@@ -447,11 +461,16 @@ BEQ FIN;</textarea>
             if (fz) pc = d;
         }
         
-        let q_val = currentLabels.hasOwnProperty('Q') ? mem[currentLabels['Q']].toString(16).toUpperCase().padStart(4, '0') : '?';
-        let i_val = currentLabels.hasOwnProperty('I') ? mem[currentLabels['I']].toString(16).toUpperCase().padStart(4, '0') : '?';
-        let resto_val = currentLabels.hasOwnProperty('RESTO') ? mem[currentLabels['RESTO']].toString(16).toUpperCase().padStart(4, '0') : '?';
+        // Dinámicamente mostrar todas las variables (labels que son DATA)
+        let stateStr = `${lbl_prefix}${mnem} -> FZ=${fz ? 1 : 0}`;
+        for (let lbl in currentLabels) {
+            let addr = currentLabels[lbl];
+            if (types[addr] === 2) { // Solo etiquetas de tipo DATA
+                stateStr += `, ${lbl}=${getDisplayValue(mem[addr])}`;
+            }
+        }
         
-        logTrace(`${lbl_prefix}${mnem} -> FZ=${fz ? 1 : 0}, Q=${q_val}, I=${i_val}, RESTO=${resto_val}`);
+        logTrace(stateStr);
 
         document.getElementById('inp-pc').value = pc;
         if (!isRunning) updateView(); // Optimización: no actualizar la GUI completa de la tabla en cada paso si está corriendo
@@ -525,6 +544,7 @@ BEQ FIN;</textarea>
             }
             
             let valHex = mem[i].toString(16).toUpperCase().padStart(4, '0');
+            let valDisp = types[i] === 2 ? getDisplayValue(mem[i]) : valHex;
             
             let dispMnem = mnemonics[i];
             if(reverseLabels[i]) {
@@ -533,7 +553,7 @@ BEQ FIN;</textarea>
             
             tr.innerHTML = `
                 <td>${i}</td>
-                <td>${valHex}</td>
+                <td>${valDisp}</td>
                 <td>${dispMnem}</td>
             `;
             tbody.appendChild(tr);
@@ -658,6 +678,22 @@ BEQ FIN;</textarea>
         }
         
         return text.trim();
+    }
+
+    
+    function saveFileTxtClean() {
+        let text = document.getElementById('editor').value;
+        let cleanText = text.split('\n').map(line => {
+            let idx = line.indexOf(';');
+            if (idx !== -1) line = line.substring(0, idx);
+            return line.trimEnd();
+        }).filter(line => line.trim().length > 0).join('\n');
+        
+        const blob = new Blob([cleanText], {type: "text/plain;charset=utf-8"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "codigo_limpio.txt";
+        a.click();
     }
 
     function saveFileTxt() {
