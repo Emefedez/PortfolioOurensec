@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Máquina Sencilla - MS Clon GUI Portable</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eef2f5; margin: 0; padding: 10px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
+        .toolbar { background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 5px; margin-bottom: 10px; display: flex; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex-wrap: wrap; align-items: center;}
+        button { background: #f8f9fa; border: 1px solid #c0c0c0; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 14px; transition: 0.2s; }
+        button:hover { background: #e2e6ea; border-color: #adb5bd; }
+        .toolbar-group { display: flex; gap: 5px; border-right: 2px solid #ddd; padding-right: 15px; align-items: center;}
+        .toolbar-group:last-child { border-right: none; }
+        input[type="number"], input[type="text"] { width: 60px; padding: 5px; font-family: monospace; border: 1px solid #ccc; border-radius: 3px; text-align: center; }
+        label { font-weight: bold; font-size: 13px; margin-right: 5px; }
+        
+        .main { display: flex; flex: 2; gap: 10px; overflow: hidden; min-height: 50vh;}
+        .log-panel { flex: 1; background: #1e1e1e; color: #d4d4d4; font-family: 'Courier New', Courier, monospace; font-size: 13px; overflow-y: auto; border-radius: 5px; border: 1px solid #ccc; margin-top: 10px; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); white-space: pre-wrap; word-wrap: break-word;}
+        
+        .panel { background: #fff; border: 1px solid #ccc; border-radius: 5px; display: flex; flex-direction: column; flex: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow: hidden; }
+        .panel-header { background: #f1f1f1; padding: 8px 15px; font-weight: bold; border-bottom: 1px solid #ccc; margin: 0; font-size: 14px; display: flex; justify-content: space-between;}
+        
+        /* Syntax highlighting setup */
+        .editor-container { position: relative; flex: 1; overflow: hidden; background: #fff; }
+        .editor-backdrop { position: absolute; top: 0; left: 0; right: 0; bottom: 0; padding: 15px; font-family: 'Courier New', Courier, monospace; font-size: 15px; white-space: pre; overflow: hidden; color: transparent; z-index: 1; pointer-events: none;}
+        .editor-textarea { position: absolute; top: 0; left: 0; right: 0; bottom: 0; padding: 15px; font-family: 'Courier New', Courier, monospace; font-size: 15px; white-space: pre; border: none; outline: none; resize: none; background: transparent; color: transparent; caret-color: black; z-index: 2;}
+        
+        /* Highlight colors */
+        .hl-inst { color: #0000ff; font-weight: bold; }
+        .hl-label { color: #800080; }
+        .hl-comment { color: #008000; font-style: italic; }
+        .hl-data { color: #b8860b; }
+        .hl-text { color: #333; }
+
+        .registers { display: flex; justify-content: space-around; padding: 15px; background: #fafafa; border-bottom: 1px solid #ccc; }
+        .reg { font-family: 'Courier New', Courier, monospace; font-size: 20px; font-weight: bold; }
+        .reg span { color: #0066cc; }
+        .reg-fz span { color: #cc0000; }
+        
+        .memory-wrap { flex: 1; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #eee; padding: 6px 10px; text-align: center; font-family: 'Courier New', Courier, monospace; font-size: 14px; }
+        th { background: #f8f8f8; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; position: sticky; top: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.1); z-index: 10; }
+        td:nth-child(3) { text-align: left; }
+        .current-inst { background: #fff3cd !important; font-weight: bold; border: 2px solid #ffc107; }
+        .bp-inst { background: #f8d7da; border: 2px solid #dc3545; }
+        .empty-inst { color: #aaa; }
+    </style>
+</head>
+<body>
+
+<div class="toolbar">
+    <div class="toolbar-group">
+        <button onclick="document.getElementById('file-input').click()">📂 Cargar .TXT</button>
+        <input type="file" id="file-input" style="display:none" onchange="loadFile(event)" accept=".txt,.asm">
+        <button onclick="saveFileTxt()">💾 Guardar .TXT</button>
+        <button onclick="saveFileMS()" style="background: #e3f2fd; border-color: #b6d4fe;">💾 Exportar .MS (DOSBox)</button>
+    </div>
+    <div class="toolbar-group">
+        <button onclick="assemble()" style="background: #d1e7dd; border-color: #a3cfbb;">⚙️ Ensamblar</button>
+        <button onclick="step()">👣 Paso</button>
+        <button onclick="run()">▶️ GO</button>
+        <button onclick="reset()">🔄 Reset</button>
+    </div>
+    <div class="toolbar-group">
+        <label for="inp-pc">PC:</label>
+        <input type="number" id="inp-pc" value="0" min="0" max="127" onchange="updatePCFromInput()">
+        <label for="inp-bp" style="margin-left: 10px; color: #dc3545;">Breakpoint:</label>
+        <input type="number" id="inp-bp" value="-1" min="-1" max="127" onchange="updateBP()">
+    </div>
+</div>
+
+<div class="main">
+    <div class="panel">
+        <div class="panel-header">EDITOR DE CÓDIGO</div>
+        <div class="editor-container">
+            <div id="editor-backdrop" class="editor-backdrop"></div>
+            <textarea id="editor" class="editor-textarea" spellcheck="false" oninput="handleEditorInput()" onscroll="handleEditorScroll()">DVDO:000A
+DSOR:0005 ;el de arriba entre el de abajo
+
+Q:0000
+RESTO:0000
+
+I:0000
+UNO:0001
+CERO:0000
+MU:FFFF
+
+INICIO:
+MOV CERO, Q;el cociente (Q) y el contador que siguen al dividendo (I) se ponen a CERO
+MOV CERO, I
+
+CMP DSOR, CERO; si el divisor es CERO, caso Inválido
+BEQ DIVSTP
+CMP DVDO, DSOR
+BEQ EQSTEP
+
+
+BUCLE:
+CMP I, DVDO ;vemos si el dividendo es el valor de I
+BEQ FIN
+
+ADD UNO, RESTO ;como la I con ese valor exacto no es igual al dividendo, el RESTO acumula una unidad máS
+CMP RESTO, DSOR; comprobamos si estamos el RESTO es igual al DIVISOR, pues si lo es, hemos dado un paso completo
+BEQ STEP; si es el caso, ejecutamos el paso de aumentar el cociente por UNO y resetear el RESTO
+
+CMP CERO, CERO
+BEQ INPLUS; como no se cumplió la condición anterior, debemos agregar 1 al índice para avanzar un paso y saltar de vuelta al principio del BUCLE 
+
+INPLUS:
+ADD UNO, I
+BEQ BUCLE; sabemos Que el flag de BEQ está activado
+
+STEP:
+ADD UNO, Q
+MOV CERO, RESTO; dado que hemos dado un paso exitoso, el RESTO se reinicia
+BEQ INPLUS; hacemos el paso obligatorio
+
+DIVSTP:
+MOV MU, Q
+MOV MU, RESTO
+BEQ FIN 
+
+EQSTEP:
+MOV UNO, Q
+BEQ FIN
+
+FIN:
+BEQ FIN;</textarea>
+        </div>
+    </div>
+    
+    <div class="panel">
+        <div class="panel-header">ESTADO DE LA MÁQUINA</div>
+        <div class="registers">
+            <div class="reg">PC: <span id="reg-pc">0</span></div>
+            <div class="reg reg-fz">FZ: <span id="reg-fz">0</span></div>
+        </div>
+        <div class="memory-wrap">
+            <table id="mem-table">
+                <thead>
+                    <tr>
+                        <th width="80">Dir</th>
+                        <th width="100">Hex</th>
+                        <th>Instrucción / Mnemónico</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- JS rellena esto -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="log-panel" id="log-panel">
+    <div style="font-weight: bold; margin-bottom: 5px; color: #fff;">[LOG DE EJECUCIÓN]</div>
+    <div id="log-content"></div>
+</div>
+
+<script>
+    const MEM_SIZE = 128;
+    let mem = new Array(MEM_SIZE).fill(0);
+    let mnemonics = new Array(MEM_SIZE).fill('');
+    let types = new Array(MEM_SIZE).fill(0); // 0=vacío, 1=inst, 2=dato
+    let pc = 0;
+    let breakpoint = -1;
+    let fz = false;
+    let halted = false;
+    let currentLabels = {};
+    let reverseLabels = {};
+
+    function logTrace(msg) {
+        let content = document.getElementById('log-content');
+        let div = document.createElement('div');
+        div.innerText = msg;
+        content.appendChild(div);
+        content.parentNode.scrollTop = content.parentNode.scrollHeight;
+    }
+
+    function clearLog() {
+        document.getElementById('log-content').innerHTML = '';
+    }
+
+    // --- SYNTAX HIGHLIGHTING ---
+    const instRegex = /\b(ADD|CMP|MOV|BEQ|HALT|STOP|DATA)\b/gi;
+    const hexRegex = /\b([0-9A-F]{1,4})\b/g;
+
+    function applyHighlights(text) {
+        let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        
+        let lines = html.split('\n');
+        for(let i=0; i<lines.length; i++) {
+            let line = lines[i];
+            
+            // Comment
+            let commentIdx = line.indexOf(';');
+            let comment = "";
+            if (commentIdx !== -1) {
+                comment = line.substring(commentIdx);
+                line = line.substring(0, commentIdx);
+            }
+            
+            // Label
+            let labelIdx = line.indexOf(':');
+            let label = "";
+            if (labelIdx !== -1) {
+                label = line.substring(0, labelIdx + 1);
+                line = line.substring(labelIdx + 1);
+            }
+            
+            // Rest of line parsing
+            let words = line.split(/(\s+|,)/);
+            let highlightedWords = words.map(w => {
+                if (w.trim() === ',' || w.trim() === '') return w;
+                let upper = w.toUpperCase();
+                if (['ADD','CMP','MOV','BEQ','HALT','STOP','DATA'].includes(upper)) {
+                    return `<span class="hl-inst">${w}</span>`;
+                }
+                if (/^[0-9A-F]{1,4}$/.test(upper)) {
+                    return `<span class="hl-data">${w}</span>`;
+                }
+                return `<span class="hl-text">${w}</span>`;
+            }).join('');
+            
+            let finalLine = "";
+            if (label) finalLine += `<span class="hl-label">${label}</span>`;
+            finalLine += highlightedWords;
+            if (comment) finalLine += `<span class="hl-comment">${comment}</span>`;
+            
+            lines[i] = finalLine;
+        }
+        
+        // Ensure trailing newline renders correctly
+        return lines.join('\n') + '\n';
+    }
+
+    function handleEditorInput() {
+        let text = document.getElementById('editor').value;
+        let highlighted = applyHighlights(text);
+        document.getElementById('editor-backdrop').innerHTML = highlighted;
+    }
+
+    function handleEditorScroll() {
+        document.getElementById('editor-backdrop').scrollTop = document.getElementById('editor').scrollTop;
+        document.getElementById('editor-backdrop').scrollLeft = document.getElementById('editor').scrollLeft;
+    }
+    // ----------------------------
+
+    function reset() {
+        mem.fill(0);
+        mnemonics.fill('');
+        types.fill(0);
+        currentLabels = {};
+        reverseLabels = {};
+        pc = 0;
+        fz = false;
+        halted = false;
+        document.getElementById('inp-pc').value = 0;
+        clearLog();
+        updateView();
+    }
+
+    function updatePCFromInput() {
+        let val = parseInt(document.getElementById('inp-pc').value);
+        if (!isNaN(val) && val >= 0 && val < MEM_SIZE) {
+            pc = val;
+            updateView();
+        }
+    }
+
+    function updateBP() {
+        let val = parseInt(document.getElementById('inp-bp').value);
+        breakpoint = isNaN(val) ? -1 : val;
+        updateView();
+    }
+
+    function assemble() {
+        mem.fill(0);
+        mnemonics.fill('');
+        types.fill(0);
+        halted = false;
+        fz = false;
+        clearLog();
+        
+        const text = document.getElementById('editor').value;
+        const lines = text.split('\n');
+        let labels = {};
+        let parsed = [];
+        
+        // Pass 1
+        let addr = 0;
+        for (let rawLine of lines) {
+            let line = rawLine.split(';')[0].trim();
+            if (!line) continue;
+            if (line.includes(':')) {
+                let parts = line.split(':');
+                labels[parts[0].trim().toUpperCase()] = addr;
+                line = parts.slice(1).join(':').trim();
+            }
+            if (line) {
+                parsed.push({addr, line});
+                addr++;
+                if (addr >= MEM_SIZE) break;
+            }
+        }
+        
+        currentLabels = labels;
+        reverseLabels = {};
+        for(let k in currentLabels) reverseLabels[currentLabels[k]] = k;
+
+        // Pass 2
+        for (let p of parsed) {
+            mnemonics[p.addr] = p.line;
+            let parts = p.line.toUpperCase().replace(/,/g, ' ').split(/\s+/).filter(x => x);
+            let cmd = parts[0];
+
+            function getVal(s) {
+                if (labels.hasOwnProperty(s)) return labels[s];
+                let val = parseInt(s);
+                if (isNaN(val)) throw new Error("Símbolo no encontrado: " + s);
+                return val;
+            }
+
+            try {
+                if (cmd === 'DATA') {
+                    mem[p.addr] = getVal(parts[1]) & 0xFFFF;
+                    types[p.addr] = 2; // Dato
+                } else if (cmd === 'ADD') {
+                    let f = getVal(parts[1]), d = getVal(parts[2]);
+                    mem[p.addr] = (0 << 14) | ((f & 0x7F) << 7) | (d & 0x7F);
+                    types[p.addr] = 1; // Inst
+                } else if (cmd === 'CMP') {
+                    let f = getVal(parts[1]), d = getVal(parts[2]);
+                    mem[p.addr] = (1 << 14) | ((f & 0x7F) << 7) | (d & 0x7F);
+                    types[p.addr] = 1;
+                } else if (cmd === 'MOV') {
+                    let f = getVal(parts[1]), d = getVal(parts[2]);
+                    mem[p.addr] = (2 << 14) | ((f & 0x7F) << 7) | (d & 0x7F);
+                    types[p.addr] = 1;
+                } else if (cmd === 'BEQ') {
+                    let d = getVal(parts[1]);
+                    mem[p.addr] = (3 << 14) | (d & 0x7F);
+                    types[p.addr] = 1;
+                } else if (cmd === 'HALT' || cmd === 'STOP') {
+                    mem[p.addr] = 0xFFFF;
+                    types[p.addr] = 1;
+                } else if (/^[0-9A-F]{1,4}$/.test(cmd)) {
+                    mem[p.addr] = parseInt(cmd, 16) & 0xFFFF;
+                    types[p.addr] = 2; // Dato
+                } else {
+                    alert("Error: Mnemónico desconocido '" + cmd + "' en línea " + p.line);
+                    return false;
+                }
+            } catch (e) {
+                alert("Error de sintaxis en '" + p.line + "': " + e.message);
+                return false;
+            }
+        }
+        
+        if (labels.hasOwnProperty('INICIO')) {
+            pc = labels['INICIO'];
+            document.getElementById('inp-pc').value = pc;
+        } else {
+            pc = 0;
+            document.getElementById('inp-pc').value = 0;
+        }
+        
+        logTrace("✓ Ensamblado con éxito. PC inicial: " + pc);
+        updateView();
+        return true;
+    }
+
+    function step() {
+        if (halted || pc >= MEM_SIZE) return false;
+        
+        let inst = mem[pc];
+        let current_pc = pc;
+        let mnem = mnemonics[pc];
+        let lbl_prefix = reverseLabels[pc] ? `[${reverseLabels[pc]}] ` : `[] `;
+        
+        if (inst === 0xFFFF || (inst === 0 && mnemonics[pc] === "")) {
+            halted = true;
+            logTrace(`[HALT] Programa finalizado en PC=${pc}`);
+            alert("Programa finalizado (HALT alcanzado).");
+            return false;
+        }
+
+        let op = (inst >> 14) & 3;
+        let f = (inst >> 7) & 0x7F;
+        let d = inst & 0x7F;
+
+        pc++;
+        if (op === 0) {
+            mem[d] = (mem[d] + mem[f]) & 0xFFFF;
+            if (types[d] !== 1) mnemonics[d] = mem[d].toString(16).toUpperCase().padStart(4, '0');
+        } else if (op === 1) {
+            fz = (mem[f] === mem[d]);
+        } else if (op === 2) {
+            mem[d] = mem[f];
+            if (types[d] !== 1) mnemonics[d] = mem[d].toString(16).toUpperCase().padStart(4, '0');
+        } else if (op === 3) {
+            if (fz) pc = d;
+        }
+        
+        // Format log state tracking
+        let q_val = currentLabels.hasOwnProperty('Q') ? mem[currentLabels['Q']].toString(16).toUpperCase() : '?';
+        let i_val = currentLabels.hasOwnProperty('I') ? mem[currentLabels['I']].toString(16).toUpperCase() : '?';
+        let resto_val = currentLabels.hasOwnProperty('RESTO') ? mem[currentLabels['RESTO']].toString(16).toUpperCase() : '?';
+        
+        logTrace(`${lbl_prefix}${mnem} -> FZ=${fz ? 1 : 0}, Q=${q_val}, I=${i_val}, RESTO=${resto_val}`);
+
+        document.getElementById('inp-pc').value = pc;
+        updateView();
+        return true;
+    }
+
+    function run() {
+        let steps = 0;
+        while (!halted && pc < MEM_SIZE && steps < 5000) {
+            if (pc === breakpoint && steps > 0) {
+                logTrace(`>> BREAKPOINT alcanzado en dir: ${breakpoint}`);
+                break;
+            }
+            if (!step()) break;
+            
+            if (pc === breakpoint) {
+                updateView();
+                logTrace(`>> BREAKPOINT alcanzado en dir: ${breakpoint}`);
+                break;
+            }
+            steps++;
+        }
+        updateView();
+        if (steps >= 5000) {
+            logTrace("!! Ejecución detenida: Límite de 5000 pasos alcanzado (posible bucle infinito).");
+        }
+    }
+
+    function updateView() {
+        document.getElementById('reg-pc').innerText = pc;
+        document.getElementById('reg-fz').innerText = fz ? 1 : 0;
+        
+        let tbody = document.querySelector('#mem-table tbody');
+        tbody.innerHTML = '';
+        
+        for (let i = 0; i < MEM_SIZE; i++) {
+            let tr = document.createElement('tr');
+            
+            if (i === breakpoint) {
+                tr.className = 'bp-inst';
+            }
+            if (i === pc) {
+                tr.className = 'current-inst';
+            }
+            if (i !== pc && i !== breakpoint && mnemonics[i] === "") {
+                tr.className = 'empty-inst';
+            }
+            
+            let valHex = mem[i].toString(16).toUpperCase().padStart(4, '0');
+            
+            let dispMnem = mnemonics[i];
+            if(reverseLabels[i]) {
+                dispMnem = "<b>" + reverseLabels[i] + ":</b> " + dispMnem;
+            }
+            
+            tr.innerHTML = `
+                <td>${i}</td>
+                <td>${valHex}</td>
+                <td>${dispMnem}</td>
+            `;
+            tbody.appendChild(tr);
+            
+            if (i === pc && pc > 0) {
+                tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
+
+    function loadFile(event) {
+        let file = event.target.files[0];
+        if (!file) return;
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('editor').value = e.target.result;
+            handleEditorInput();
+            document.getElementById('file-input').value = '';
+        };
+        reader.readAsText(file);
+    }
+
+    function saveFileTxt() {
+        const text = document.getElementById('editor').value;
+        const blob = new Blob([text], {type: "text/plain;charset=utf-8"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "codigo.txt";
+        a.click();
+    }
+
+    function saveFileMS() {
+        // Formato MS.EXE nativo documentado:
+        // [4 bytes Header]: numLabels (uint16 little endian), 0x00, 0x00
+        // [256 bytes Data]: 128 words, little endian
+        // [128 bytes DataTypes]: 0=vacio, 1=inst, 2=dato
+        // [numLabels * 7 bytes]: Nombres etiquetas (6 char + null)
+        // [numLabels * 2 bytes]: Posiciones (index en memoria, uint16 little endian)
+        
+        let activeLabels = [];
+        for(let i=0; i<MEM_SIZE; i++) {
+            if(reverseLabels[i]) {
+                activeLabels.push({ name: reverseLabels[i], pos: i });
+            }
+        }
+        
+        let numLabels = activeLabels.length;
+        let totalSize = 4 + 256 + 128 + (numLabels * 7) + (numLabels * 2);
+        let buf = new Uint8Array(totalSize);
+
+        // Header
+        buf[0] = numLabels & 0xFF;
+        buf[1] = (numLabels >> 8) & 0xFF;
+        buf[2] = 0;
+        buf[3] = 0;
+
+        // 1. Memoria (Data)
+        let memOffset = 4;
+        for(let i=0; i<MEM_SIZE; i++) {
+            buf[memOffset + (i*2)] = mem[i] & 0xFF;         // Low byte
+            buf[memOffset + (i*2) + 1] = (mem[i] >> 8) & 0xFF; // High byte
+        }
+
+        // 2. Types
+        let typesOffset = memOffset + 256;
+        for(let i=0; i<MEM_SIZE; i++) {
+            buf[typesOffset + i] = types[i];
+        }
+
+        // 3. Etiquetas (Nombres)
+        let labelsNameOffset = typesOffset + 128;
+        for(let i=0; i<numLabels; i++) {
+            let name = activeLabels[i].name.substring(0, 6); // Max 6 chars
+            for(let c=0; c<name.length; c++) {
+                buf[labelsNameOffset + (i*7) + c] = name.charCodeAt(c);
+            }
+            buf[labelsNameOffset + (i*7) + name.length] = 0; // Null terminator
+        }
+
+        // 4. Etiquetas (Posiciones)
+        let labelsPosOffset = labelsNameOffset + (numLabels * 7);
+        for(let i=0; i<numLabels; i++) {
+            let pos = activeLabels[i].pos;
+            buf[labelsPosOffset + (i*2)] = pos & 0xFF;
+            buf[labelsPosOffset + (i*2) + 1] = (pos >> 8) & 0xFF;
+        }
+
+        const blob = new Blob([buf], {type: "application/octet-stream"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "PROG.MS";
+        a.click();
+    }
+
+    // Inicializar GUI
+    handleEditorInput();
+    assemble();
+</script>
+
+</body>
+</html>
