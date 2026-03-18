@@ -231,7 +231,7 @@ FINFIN: BEQ FINFIN</textarea>
 
     function assemble() {
         stopRun(); mem.fill(0); mnemonics.fill(''); types.fill(0); currentLabels = {}; reverseLabels = {};
-        let text = document.getElementById('editor').value, lines = text.split('\n'), parsed = [], addr = 2; // Start at 2 for MS compat
+        let text = document.getElementById('editor').value, lines = text.split('\n'), parsed = [], addr = 0; 
         for (let raw of lines) {
             let line = raw.split(';')[0].trim();
             if (!line) continue;
@@ -246,7 +246,7 @@ FINFIN: BEQ FINFIN</textarea>
             mnemonics[p.addr] = p.line;
             let parts = p.line.toUpperCase().replace(/,/g, ' ').split(/\s+/).filter(x => x);
             let cmd = parts[0];
-            let getV = (s) => currentLabels[s] || (/[A-F]/i.test(s) ? parseInt(s, 16) : parseInt(s, 10));
+            let getV = (s) => (currentLabels.hasOwnProperty(s)) ? currentLabels[s] : parseInt(s, 16);
             try {
                 if (cmd === 'DATA') { mem[p.addr] = getV(parts[1]) & 0xFFFF; types[p.addr] = 2; }
                 else if (['ADD','CMP','MOV'].includes(cmd)) {
@@ -259,7 +259,7 @@ FINFIN: BEQ FINFIN</textarea>
             } catch(e) {}
         }
         for(let k in currentLabels) reverseLabels[currentLabels[k]] = k;
-        pc = currentLabels['INICIO'] || 2;
+        pc = currentLabels['INICIO'] || 0;
         document.getElementById('inp-pc').value = pc;
         document.getElementById('log-content').innerHTML = '';
         logTrace("✓ Ensamblado. PC inicial: " + pc);
@@ -316,7 +316,7 @@ FINFIN: BEQ FINFIN</textarea>
         for (let i = 0; i < MEM_SIZE; i++) {
             let tr = document.createElement('tr');
             if (i === pc) tr.className = 'current-inst'; else if (i === breakpoint) tr.className = 'bp-inst'; else if (!mnemonics[i]) tr.className = 'empty-inst';
-            let dispVal = (i < 2) ? mem[i] : (types[i] === 2 ? getDisp(mem[i]) : mem[i].toString(16).toUpperCase().padStart(4, '0'));
+            let dispVal = (types[i] === 2) ? getDisp(mem[i]) : mem[i].toString(16).toUpperCase().padStart(4, '0');
             tr.innerHTML = `<td>${i}</td><td>${dispVal}</td><td>${reverseLabels[i] ? `<b>${reverseLabels[i]}:</b> ` : ""}${mnemonics[i]}</td>`;
             tbody.appendChild(tr);
             if (i === pc && pc > 0) tr.scrollIntoView({ block: 'center' });
@@ -346,14 +346,14 @@ FINFIN: BEQ FINFIN</textarea>
             fileLabels[pos] = name;
         }
         let text = "; Decompilado\n";
-        for(let i=2; i<128; i++) {
+        for(let i=0; i<128; i++) {
             if (!fileTypes[i] && !fileLabels[i]) continue;
             let line = fileLabels[i] ? fileLabels[i] + ": " : "";
             if (fileTypes[i] === 2) line += "DATA " + fileMem[i].toString(16).toUpperCase().padStart(4, '0');
             else if (fileTypes[i] === 1) {
                 let v = fileMem[i]; if(v===0xFFFF) line+="HALT"; else {
                     let op = (v>>14)&3, f = (v>>7)&0x7F, d = v&0x7F;
-                    line += ["ADD","CMP","MOV","BEQ"][op] + (op===3 ? ` ${fileLabels[d]||d}` : ` ${fileLabels[f]||f}, ${fileLabels[d]||d}`);
+                    line += ["ADD","CMP","MOV","BEQ"][op] + (op===3 ? ` ${fileLabels[d]||d.toString(16).toUpperCase()}` : ` ${fileLabels[f]||f.toString(16).toUpperCase()}, ${fileLabels[d]||d.toString(16).toUpperCase()}`);
                 }
             }
             text += line + "\n";
@@ -366,8 +366,7 @@ FINFIN: BEQ FINFIN</textarea>
         let buf = new Uint8Array(388 + active.length * 9);
         buf[0] = active.length & 0xFF; buf[1] = (active.length >> 8) & 0xFF;
         for(let i=0; i<MEM_SIZE; i++) { 
-            let v = (i===0) ? active.length : (i===1 ? 0 : mem[i]);
-            buf[4+i*2] = v & 0xFF; buf[4+i*2+1] = (v >> 8) & 0xFF; 
+            buf[4+i*2] = mem[i] & 0xFF; buf[4+i*2+1] = (mem[i] >> 8) & 0xFF; 
             buf[260+i] = types[i];
         }
         active.forEach((l, i) => {
