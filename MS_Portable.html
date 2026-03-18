@@ -4,52 +4,50 @@
     <meta charset="UTF-8">
     <title>Máquina Sencilla - MS Clon GUI Portable</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eef2f5; margin: 0; padding: 10px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eef2f5; margin: 0; padding: 10px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; overflow: hidden;}
         .toolbar { background: #fff; border: 1px solid #ccc; padding: 6px 10px; border-radius: 5px; margin-bottom: 5px; display: flex; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); align-items: center; flex: none;}
         button { background: #f8f9fa; border: 1px solid #c0c0c0; padding: 5px 12px; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 13px; transition: 0.2s; }
         button:hover { background: #e2e6ea; border-color: #adb5bd; }
         .toolbar-group { display: flex; gap: 5px; border-right: 2px solid #ddd; padding-right: 10px; align-items: center;}
         .toolbar-group:last-child { border-right: none; }
         input[type="number"], input[type="text"] { width: 60px; padding: 5px; font-family: monospace; border: 1px solid #ccc; border-radius: 3px; text-align: center; }
-        label { font-weight: bold; font-size: 13px; margin-right: 5px; }
+        label { font-weight: bold; font-size: 12px; margin-right: 5px; }
         
         .workspace { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        .top-section { display: flex; height: 65%; overflow: hidden; min-height: 150px; }
         
-        .top-section { display: flex; flex: 2; overflow: hidden; min-height: 200px; }
-        .resizer-x { width: 8px; cursor: col-resize; background: transparent; transition: background 0.2s; margin: 0 2px; }
-        .resizer-x:hover, .resizer-x.active { background: #bbb; border-radius: 4px; }
-        .resizer-y { height: 8px; cursor: row-resize; background: transparent; transition: background 0.2s; margin: 2px 0; flex: none; }
-        .resizer-y:hover, .resizer-y.active { background: #bbb; border-radius: 4px; }
+        .resizer-x { width: 6px; cursor: col-resize; background: #ddd; transition: background 0.2s; }
+        .resizer-x:hover { background: #bbb; }
+        .resizer-y { height: 6px; cursor: row-resize; background: #ddd; transition: background 0.2s; flex: none; }
+        .resizer-y:hover { background: #bbb; }
         
-        .log-panel { flex: none; height: 150px; background: #1e1e1e; color: #d4d4d4; font-family: 'Courier New', Courier, monospace; font-size: 13px; overflow-y: auto; border-radius: 5px; border: 1px solid #ccc; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); white-space: pre-wrap; word-wrap: break-word;}
+        .log-panel { flex: 1; background: #1e1e1e; color: #d4d4d4; font-family: 'Courier New', Courier, monospace; font-size: 13px; overflow-y: auto; border-radius: 5px; border: 1px solid #ccc; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); white-space: pre-wrap; word-wrap: break-word; min-height: 80px;}
         
         .panel { background: #fff; border: 1px solid #ccc; border-radius: 5px; display: flex; flex-direction: column; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow: hidden; }
-        .panel-header { background: #f1f1f1; padding: 8px 15px; font-weight: bold; border-bottom: 1px solid #ccc; margin: 0; font-size: 14px; display: flex; justify-content: space-between;}
+        .panel-header { background: #f1f1f1; padding: 6px 12px; font-weight: bold; border-bottom: 1px solid #ccc; margin: 0; font-size: 13px; display: flex; justify-content: space-between;}
         
-        /* Syntax highlighting setup */
         .editor-container { position: relative; flex: 1; overflow: hidden; background: #fff; }
         .editor-backdrop { position: absolute; top: 0; left: 0; right: 0; bottom: 0; padding: 15px; font-family: 'Courier New', Courier, monospace; font-size: 15px; white-space: pre; overflow: hidden; color: transparent; z-index: 1; pointer-events: none;}
         .editor-textarea { position: absolute; top: 0; left: 0; right: 0; bottom: 0; padding: 15px; font-family: 'Courier New', Courier, monospace; font-size: 15px; white-space: pre; border: none; outline: none; resize: none; background: transparent; color: transparent; caret-color: black; z-index: 2;}
         
-        /* Highlight colors */
         .hl-inst { color: #0000ff; font-weight: bold; }
         .hl-label { color: #800080; }
         .hl-comment { color: #008000; font-style: italic; }
         .hl-data { color: #b8860b; }
         .hl-text { color: #333; }
 
-        .registers { display: flex; justify-content: space-around; padding: 15px; background: #fafafa; border-bottom: 1px solid #ccc; }
-        .reg { font-family: 'Courier New', Courier, monospace; font-size: 20px; font-weight: bold; }
+        .registers { display: flex; justify-content: space-around; padding: 10px; background: #fafafa; border-bottom: 1px solid #ccc; }
+        .reg { font-family: 'Courier New', Courier, monospace; font-size: 18px; font-weight: bold; }
         .reg span { color: #0066cc; }
         .reg-fz span { color: #cc0000; }
         
         .memory-wrap { flex: 1; overflow-y: auto; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #eee; padding: 6px 10px; text-align: center; font-family: 'Courier New', Courier, monospace; font-size: 14px; }
-        th { background: #f8f8f8; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; position: sticky; top: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.1); z-index: 10; }
+        th, td { border: 1px solid #eee; padding: 4px 8px; text-align: center; font-family: 'Courier New', Courier, monospace; font-size: 13px; }
+        th { background: #f8f8f8; position: sticky; top: 0; z-index: 10; font-family: sans-serif; font-size: 12px; }
         td:nth-child(3) { text-align: left; }
-        .current-inst { background: #fff3cd !important; font-weight: bold; border: 2px solid #ffc107; }
-        .bp-inst { background: #f8d7da; border: 2px solid #dc3545; }
+        .current-inst { background: #fff3cd !important; font-weight: bold; }
+        .bp-inst { background: #f8d7da !important; }
         .empty-inst { color: #aaa; }
     </style>
 </head>
@@ -57,92 +55,96 @@
 
 <div class="toolbar">
     <div class="toolbar-group">
-        <button onclick="document.getElementById('file-input').click()">📂 Cargar Fichero</button>
+        <button onclick="document.getElementById('file-input').click()">📂 Cargar</button>
         <input type="file" id="file-input" style="display:none" onchange="loadFile(event)" accept=".txt,.asm,.ms,.MS">
-        <button onclick="saveFileTxt()">💾 Guardar .TXT</button>
-        <button onclick="saveFileTxtClean()">📄 .TXT (Sin Comentarios)</button>
-        <button onclick="saveFileMS()" style="background: #e3f2fd; border-color: #b6d4fe;">💾 Exportar .MS (DOSBox)</button>
+        <button onclick="saveFileTxt()">💾 .TXT</button>
+        <button onclick="saveFileTxtClean()">📄 Limpio</button>
+        <button onclick="saveFileMS()" style="background: #e3f2fd; border-color: #b6d4fe;">💾 Exportar .MS</button>
     </div>
     <div class="toolbar-group">
         <button onclick="assemble()" style="background: #d1e7dd; border-color: #a3cfbb;">⚙️ Ensamblar</button>
         <button onclick="step()" id="btn-step">👣 Paso</button>
         <button onclick="run()" id="btn-run">▶️ GO</button>
-        <button onclick="stopRun()" id="btn-stop" style="display:none; background: #f8d7da; border-color: #dc3545;">🛑 Frenar</button>
+        <button onclick="stopRun()" id="btn-stop" style="display:none; background: #f8d7da; border-color: #dc3545;">🛑 Parar</button>
         <button onclick="reset()">🔄 Reset</button>
     </div>
     <div class="toolbar-group">
-        <label for="inp-pc">PC:</label>
+        <label>PC:</label>
         <input type="number" id="inp-pc" value="0" min="0" max="127" onchange="updatePCFromInput()">
-        <label for="inp-bp" style="margin-left: 10px; color: #dc3545;">Breakpoint:</label>
+        <label style="margin-left: 8px; color: #dc3545;">BP:</label>
         <input type="number" id="inp-bp" value="-1" min="-1" max="127" onchange="updateBP()">
     </div>
 </div>
 
 <div class="workspace">
     <div class="top-section" id="top-section">
-        <div class="panel" id="left-panel" style="width: 45%; flex: none;">
-            <div class="panel-header">EDITOR DE CÓDIGO</div>
+        <div class="panel" id="left-panel" style="width: 45%;">
+            <div class="panel-header">EDITOR</div>
             <div class="editor-container">
                 <div id="editor-backdrop" class="editor-backdrop"></div>
-                <textarea id="editor" class="editor-textarea" spellcheck="false" oninput="handleEditorInput()" onscroll="handleEditorScroll()">DVDO:000A
-DSOR:0005 ;el de arriba entre el de abajo
+                <textarea id="editor" class="editor-textarea" spellcheck="false" oninput="handleEditorInput()" onscroll="handleEditorScroll()">UNO: 1
+CERO: 0
 
-Q:0000
-RESTO:0000
+If: 1
+RESULT: 1
 
-I:0000
-UNO:0001
-CERO:0000
-MU:FFFF
+NUM: 5 
+M: 3
 
 INICIO:
-MOV CERO, Q;el cociente (Q) y el contador que siguen al dividendo (I) se ponen a CERO
+MOV UNO, If
+MOV UNO, R
+ADD UNO, NUM
+
+SIGUEn: 
+MOV R, RESULT
+CMP If, NUM
+BEQ SALIRm
+
+MOV RESULT, NUM1 
+MOV If, NUM2
+ADD UNO, If
+MOV RET1, FINM
+CMP CERO, CERO
+BEQ INIMUL
+
+SALIRm:
+MOV RESULT, NUM1
+MOV M, NUM2
+MOV FIN, FINM
+BEQ INIMUL
+
+I: 3
+R: 0
+NUM1: 2
+NUM2: 3
+
+INIMUL:
+MOV CERO, R
 MOV CERO, I
 
-CMP DSOR, CERO; si el divisor es CERO, caso Inválido
-BEQ DIVSTP
-CMP DVDO, DSOR
-BEQ EQSTEP
-
-
-BUCLE:
-CMP I, DVDO ;vemos si el dividendo es el valor de I
-BEQ FIN
-
-ADD UNO, RESTO ;como la I con ese valor exacto no es igual al dividendo, el RESTO acumula una unidad máS
-CMP RESTO, DSOR; comprobamos si estamos el RESTO es igual al DIVISOR, pues si lo es, hemos dado un paso completo
-BEQ STEP; si es el caso, ejecutamos el paso de aumentar el cociente por UNO y resetear el RESTO
-
-CMP CERO, CERO
-BEQ INPLUS; como no se cumplió la condición anterior, debemos agregar 1 al índice para avanzar un paso y saltar de vuelta al principio del BUCLE 
-
-INPLUS:
+BUCMUL:
+CMP I, NUM2
+BEQ FINM
+ADD NUM1, R
 ADD UNO, I
-BEQ BUCLE; sabemos Que el flag de BEQ está activado
+CMP CERO, CERO
+BEQ BUCMUL
 
-STEP:
-ADD UNO, Q
-MOV CERO, RESTO; dado que hemos dado un paso exitoso, el RESTO se reinicia
-BEQ INPLUS; hacemos el paso obligatorio
+FINM: BEQ SIGUEn
+RET1: BEQ SIGUEn
 
-DIVSTP:
-MOV MU, Q
-MOV MU, RESTO
-BEQ FIN 
-
-EQSTEP:
-MOV UNO, Q
-BEQ FIN
-
-FIN:
-BEQ FIN;</textarea>
+FIN: 
+MOV R, RESULT
+MOV RESULT, NUM
+FINFIN: BEQ FINFIN</textarea>
             </div>
         </div>
         
         <div class="resizer-x" id="drag-x"></div>
         
         <div class="panel" id="right-panel" style="flex: 1;">
-            <div class="panel-header">ESTADO DE LA MÁQUINA</div>
+            <div class="panel-header">ESTADO (HEX/DEC)</div>
             <div class="registers">
                 <div class="reg">PC: <span id="reg-pc">0</span></div>
                 <div class="reg reg-fz">FZ: <span id="reg-fz">0</span></div>
@@ -151,14 +153,12 @@ BEQ FIN;</textarea>
                 <table id="mem-table">
                     <thead>
                         <tr>
-                            <th width="80">Dir</th>
-                            <th width="100">Hex</th>
-                            <th>Instrucción / Mnemónico</th>
+                            <th width="40">Dir</th>
+                            <th width="120">Valor</th>
+                            <th>Mnemónico / Instrucción</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <!-- JS rellena esto -->
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
         </div>
@@ -173,51 +173,24 @@ BEQ FIN;</textarea>
 </div>
 
 <script>
-    // --- RESIZER LOGIC ---
-    let isDraggingX = false;
-    let isDraggingY = false;
+    // --- RESIZER ---
+    let isDraggingX = false, isDraggingY = false;
+    document.getElementById('drag-x').onmousedown = (e) => { isDraggingX = true; e.preventDefault(); };
+    document.getElementById('drag-y').onmousedown = (e) => { isDraggingY = true; e.preventDefault(); };
+    document.onmousemove = (e) => {
+        if (isDraggingX) document.getElementById('left-panel').style.width = e.clientX + 'px';
+        if (isDraggingY) document.getElementById('top-section').style.height = (e.clientY - 45) + 'px';
+    };
+    document.onmouseup = () => { isDraggingX = isDraggingY = false; };
 
-    document.getElementById('drag-x').addEventListener('mousedown', function(e) {
-        isDraggingX = true;
-        document.body.style.cursor = 'col-resize';
-        e.preventDefault();
-    });
-    
-    document.getElementById('drag-y').addEventListener('mousedown', function(e) {
-        isDraggingY = true;
-        document.body.style.cursor = 'row-resize';
-        e.preventDefault();
-    });
-
-    document.addEventListener('mousemove', function(e) {
-        if (isDraggingX) {
-            let leftPanel = document.getElementById('left-panel');
-            leftPanel.style.width = e.clientX + 'px';
-        } else if (isDraggingY) {
-            let topSection = document.getElementById('top-section');
-            topSection.style.height = (e.clientY - topSection.getBoundingClientRect().top) + 'px';
-            topSection.style.flex = 'none';
-        }
-    });
-
-    document.addEventListener('mouseup', function(e) {
-        isDraggingX = false;
-        isDraggingY = false;
-        document.body.style.cursor = 'default';
-    });
-    // ----------------------------
-
+    // --- EMULATOR ---
     const MEM_SIZE = 128;
-    let mem = new Array(MEM_SIZE).fill(0);
-    let mnemonics = new Array(MEM_SIZE).fill('');
-    let types = new Array(MEM_SIZE).fill(0); // 0=vacío, 1=inst, 2=dato
-    let pc = 0;
-    let breakpoint = -1;
-    let fz = false;
-    let halted = false;
-    let currentLabels = {};
-    let reverseLabels = {};
-    let isRunning = false;
+    let mem = new Array(MEM_SIZE).fill(0), mnemonics = new Array(MEM_SIZE).fill(''), types = new Array(MEM_SIZE).fill(0);
+    let pc = 0, breakpoint = -1, fz = false, halted = false, isRunning = false;
+    let currentLabels = {}, reverseLabels = {};
+
+    function toSigned(val) { return val >= 0x8000 ? val - 0x10000 : val; }
+    function getDisp(val) { return `${val.toString(16).toUpperCase().padStart(4, '0')} (${toSigned(val)})`; }
 
     function logTrace(msg) {
         let content = document.getElementById('log-content');
@@ -227,538 +200,190 @@ BEQ FIN;</textarea>
         content.parentNode.scrollTop = content.parentNode.scrollHeight;
     }
 
-    function clearLog() {
-        document.getElementById('log-content').innerHTML = '';
-    }
-
-    // --- SYNTAX HIGHLIGHTING ---
-    const instRegex = /\b(ADD|CMP|MOV|BEQ|HALT|STOP|DATA)\b/gi;
-    const hexRegex = /\b([0-9A-F]{1,4})\b/g;
-
-    function applyHighlights(text) {
-        let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        
-        let lines = html.split('\n');
-        for(let i=0; i<lines.length; i++) {
-            let line = lines[i];
-            
-            let commentIdx = line.indexOf(';');
-            let comment = "";
-            if (commentIdx !== -1) {
-                comment = line.substring(commentIdx);
-                line = line.substring(0, commentIdx);
-            }
-            
-            let labelIdx = line.indexOf(':');
-            let label = "";
-            if (labelIdx !== -1) {
-                label = line.substring(0, labelIdx + 1);
-                line = line.substring(labelIdx + 1);
-            }
-            
-            let words = line.split(/(\s+|,)/);
-            let highlightedWords = words.map(w => {
-                if (w === '') return w;
-                if (w.trim() === '') return w; // keep spaces transparent/normal
-                if (w === ',') return `<span class="hl-text">${w}</span>`;
-                
-                let upper = w.toUpperCase();
-                if (['ADD','CMP','MOV','BEQ','HALT','STOP','DATA'].includes(upper)) {
-                    return `<span class="hl-inst">${w}</span>`;
-                }
-                if (/^[0-9A-F]{1,4}$/.test(upper)) {
-                    return `<span class="hl-data">${w}</span>`;
-                }
-                return `<span class="hl-text">${w}</span>`;
-            }).join('');
-            
-            let finalLine = "";
-            if (label) finalLine += `<span class="hl-label">${label}</span>`;
-            finalLine += highlightedWords;
-            if (comment) finalLine += `<span class="hl-comment">${comment}</span>`;
-            
-            lines[i] = finalLine;
-        }
-        
-        return lines.join('\n') + '\n';
-    }
-
     function handleEditorInput() {
         let text = document.getElementById('editor').value;
-        let highlighted = applyHighlights(text);
-        document.getElementById('editor-backdrop').innerHTML = highlighted;
+        document.getElementById('editor-backdrop').innerHTML = applyHighlights(text);
     }
-
     function handleEditorScroll() {
-        document.getElementById('editor-backdrop').scrollTop = document.getElementById('editor').scrollTop;
-        document.getElementById('editor-backdrop').scrollLeft = document.getElementById('editor').scrollLeft;
-    }
-    // ----------------------------
-
-    function toSigned(val) {
-        return val >= 0x8000 ? val - 0x10000 : val;
+        let e = document.getElementById('editor');
+        let b = document.getElementById('editor-backdrop');
+        b.scrollTop = e.scrollTop; b.scrollLeft = e.scrollLeft;
     }
 
-    function getDisplayValue(val) {
-        let hex = val.toString(16).toUpperCase().padStart(4, '0');
-        let dec = toSigned(val);
-        return `${hex} (${dec})`;
-    }
-
-    function reset() {
-        stopRun();
-        mem.fill(0);
-        mnemonics.fill('');
-        types.fill(0);
-        currentLabels = {};
-        reverseLabels = {};
-        pc = 0;
-        fz = false;
-        halted = false;
-        document.getElementById('inp-pc').value = 0;
-        clearLog();
-        updateView();
-    }
-
-    function updatePCFromInput() {
-        let val = parseInt(document.getElementById('inp-pc').value);
-        if (!isNaN(val) && val >= 0 && val < MEM_SIZE) {
-            pc = val;
-            updateView();
-        }
-    }
-
-    function updateBP() {
-        let val = parseInt(document.getElementById('inp-bp').value);
-        breakpoint = isNaN(val) ? -1 : val;
-        updateView();
+    function applyHighlights(text) {
+        return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').split('\n').map(line => {
+            let commentIdx = line.indexOf(';');
+            let comment = commentIdx !== -1 ? line.substring(commentIdx) : "";
+            line = commentIdx !== -1 ? line.substring(0, commentIdx) : line;
+            let labelIdx = line.indexOf(':');
+            let label = labelIdx !== -1 ? line.substring(0, labelIdx + 1) : "";
+            line = labelIdx !== -1 ? line.substring(labelIdx + 1) : line;
+            let highlighted = line.split(/(\s+|,)/).map(w => {
+                if (w === ',' || w.trim() === '') return `<span class="hl-text">${w}</span>`;
+                let u = w.toUpperCase();
+                if (['ADD','CMP','MOV','BEQ','HALT','STOP','DATA'].includes(u)) return `<span class="hl-inst">${w}</span>`;
+                if (/^[0-9A-F]{1,4}$/.test(u)) return `<span class="hl-data">${w}</span>`;
+                return `<span class="hl-text">${w}</span>`;
+            }).join('');
+            return (label ? `<span class="hl-label">${label}</span>` : "") + highlighted + (comment ? `<span class="hl-comment">${comment}</span>` : "");
+        }).join('\n') + '\n';
     }
 
     function assemble() {
-        stopRun();
-        mem.fill(0);
-        mnemonics.fill('');
-        types.fill(0);
-        halted = false;
-        fz = false;
-        clearLog();
-        
-        const text = document.getElementById('editor').value;
-        const lines = text.split('\n');
-        let labels = {};
-        let parsed = [];
-        
-        let addr = 0;
-        for (let rawLine of lines) {
-            let line = rawLine.split(';')[0].trim();
+        stopRun(); mem.fill(0); mnemonics.fill(''); types.fill(0); currentLabels = {}; reverseLabels = {};
+        let text = document.getElementById('editor').value, lines = text.split('\n'), parsed = [], addr = 2; // Start at 2 for MS compat
+        for (let raw of lines) {
+            let line = raw.split(';')[0].trim();
             if (!line) continue;
             if (line.includes(':')) {
                 let parts = line.split(':');
-                labels[parts[0].trim().toUpperCase()] = addr;
+                currentLabels[parts[0].trim().toUpperCase()] = addr;
                 line = parts.slice(1).join(':').trim();
             }
-            if (line) {
-                parsed.push({addr, line});
-                addr++;
-                if (addr >= MEM_SIZE) break;
-            }
+            if (line) { parsed.push({addr, line}); addr++; }
         }
-        
-        currentLabels = labels;
-        reverseLabels = {};
-        for(let k in currentLabels) reverseLabels[currentLabels[k]] = k;
-
         for (let p of parsed) {
             mnemonics[p.addr] = p.line;
             let parts = p.line.toUpperCase().replace(/,/g, ' ').split(/\s+/).filter(x => x);
             let cmd = parts[0];
-
-            function getVal(s) {
-                if (labels.hasOwnProperty(s)) return labels[s];
-                let val = parseInt(s);
-                if (isNaN(val)) throw new Error("Símbolo no encontrado: " + s);
-                return val;
-            }
-
+            let getV = (s) => currentLabels[s] || (/[A-F]/i.test(s) ? parseInt(s, 16) : parseInt(s, 10));
             try {
-                if (cmd === 'DATA') {
-                    mem[p.addr] = getVal(parts[1]) & 0xFFFF;
-                    types[p.addr] = 2; // Dato
-                } else if (cmd === 'ADD') {
-                    let f = getVal(parts[1]), d = getVal(parts[2]);
-                    mem[p.addr] = (0 << 14) | ((f & 0x7F) << 7) | (d & 0x7F);
-                    types[p.addr] = 1; // Inst
-                } else if (cmd === 'CMP') {
-                    let f = getVal(parts[1]), d = getVal(parts[2]);
-                    mem[p.addr] = (1 << 14) | ((f & 0x7F) << 7) | (d & 0x7F);
+                if (cmd === 'DATA') { mem[p.addr] = getV(parts[1]) & 0xFFFF; types[p.addr] = 2; }
+                else if (['ADD','CMP','MOV'].includes(cmd)) {
+                    let op = {'ADD':0,'CMP':1,'MOV':2}[cmd];
+                    mem[p.addr] = (op << 14) | ((getV(parts[1]) & 0x7F) << 7) | (getV(parts[2]) & 0x7F);
                     types[p.addr] = 1;
-                } else if (cmd === 'MOV') {
-                    let f = getVal(parts[1]), d = getVal(parts[2]);
-                    mem[p.addr] = (2 << 14) | ((f & 0x7F) << 7) | (d & 0x7F);
-                    types[p.addr] = 1;
-                } else if (cmd === 'BEQ') {
-                    let d = getVal(parts[1]);
-                    mem[p.addr] = (3 << 14) | (d & 0x7F);
-                    types[p.addr] = 1;
-                } else if (cmd === 'HALT' || cmd === 'STOP') {
-                    mem[p.addr] = 0xFFFF;
-                    types[p.addr] = 1;
-                } else if (/^[0-9A-F]{1,4}$/.test(cmd)) {
-                    mem[p.addr] = parseInt(cmd, 16) & 0xFFFF;
-                    types[p.addr] = 2; // Dato
-                } else {
-                    alert("Error: Mnemónico desconocido '" + cmd + "' en línea " + p.line);
-                    return false;
-                }
-            } catch (e) {
-                alert("Error de sintaxis en '" + p.line + "': " + e.message);
-                return false;
-            }
+                } else if (cmd === 'BEQ') { mem[p.addr] = (3 << 14) | (getV(parts[1]) & 0x7F); types[p.addr] = 1; }
+                else if (cmd === 'HALT' || cmd === 'STOP') { mem[p.addr] = 0xFFFF; types[p.addr] = 1; }
+                else if (/^[0-9A-F]{1,4}$/.test(cmd)) { mem[p.addr] = parseInt(cmd, 16) & 0xFFFF; types[p.addr] = 2; }
+            } catch(e) {}
         }
-        
-        if (labels.hasOwnProperty('INICIO')) {
-            pc = labels['INICIO'];
-            document.getElementById('inp-pc').value = pc;
-        } else {
-            pc = 0;
-            document.getElementById('inp-pc').value = 0;
-        }
-        
-        logTrace("✓ Ensamblado con éxito. PC inicial: " + pc);
+        for(let k in currentLabels) reverseLabels[currentLabels[k]] = k;
+        pc = currentLabels['INICIO'] || 2;
+        document.getElementById('inp-pc').value = pc;
+        document.getElementById('log-content').innerHTML = '';
+        logTrace("✓ Ensamblado. PC inicial: " + pc);
         updateView();
-        return true;
     }
 
     function step() {
         if (halted || pc >= MEM_SIZE) return false;
-        
-        let inst = mem[pc];
-        let current_pc = pc;
-        let mnem = mnemonics[pc];
-        let lbl_prefix = reverseLabels[pc] ? `[${reverseLabels[pc]}] ` : `[] `;
-        
-        if (inst === 0xFFFF || (inst === 0 && mnemonics[pc] === "")) {
-            halted = true;
-            logTrace(`[HALT] Programa finalizado en PC=${pc}`);
-            if (!isRunning) alert("Programa finalizado (HALT alcanzado).");
-            return false;
-        }
-
-        let op = (inst >> 14) & 3;
-        let f = (inst >> 7) & 0x7F;
-        let d = inst & 0x7F;
-
+        let inst = mem[pc], cur_pc = pc, mnem = mnemonics[pc], lbl = reverseLabels[pc] ? `[${reverseLabels[pc]}] ` : `[] `;
+        if (inst === 0xFFFF || (inst === 0 && !mnem)) { halted = true; logTrace(`[HALT] Fin en PC=${pc}`); return false; }
+        let op = (inst >> 14) & 3, f = (inst >> 7) & 0x7F, d = inst & 0x7F;
         pc++;
-        if (op === 0) {
-            mem[d] = (mem[d] + mem[f]) & 0xFFFF;
-            if (types[d] !== 1) mnemonics[d] = mem[d].toString(16).toUpperCase().padStart(4, '0');
-        } else if (op === 1) {
-            fz = (mem[f] === mem[d]);
-        } else if (op === 2) {
-            mem[d] = mem[f];
-            if (types[d] !== 1) mnemonics[d] = mem[d].toString(16).toUpperCase().padStart(4, '0');
-        } else if (op === 3) {
-            if (fz) pc = d;
-        }
+        if (op === 0) { mem[d] = (mem[d] + mem[f]) & 0xFFFF; }
+        else if (op === 1) { fz = (mem[f] === mem[d]); }
+        else if (op === 2) { mem[d] = mem[f]; }
+        else if (op === 3 && fz) { pc = d; }
         
-        // Dinámicamente mostrar todas las variables (labels que son DATA)
-        let stateStr = `${lbl_prefix}${mnem} -> FZ=${fz ? 1 : 0}`;
-        for (let lbl in currentLabels) {
-            let addr = currentLabels[lbl];
-            if (types[addr] === 2) { // Solo etiquetas de tipo DATA
-                stateStr += `, ${lbl}=${getDisplayValue(mem[addr])}`;
-            }
+        // Auto-update instructions if modified (Self-modifying code support)
+        if ((op === 0 || op === 2) && types[d] === 1) {
+            let ni = mem[d], nop = (ni >> 14) & 3, nf = (ni >> 7) & 0x7F, nd = ni & 0x7F;
+            mnemonics[d] = (ni === 0xFFFF) ? "HALT" : (["ADD","CMP","MOV","BEQ"][nop] + (nop===3?` ${nd}`:` ${nf}, ${nd}`));
+        } else if ((op === 0 || op === 2) && types[d] !== 1) {
+            mnemonics[d] = mem[d].toString(16).toUpperCase().padStart(4, '0');
         }
-        
-        logTrace(stateStr);
 
+        let state = `${lbl}${mnem} -> FZ=${fz?1:0}`;
+        for(let k in currentLabels) if(types[currentLabels[k]] === 2) state += `, ${k}=${getDisp(mem[currentLabels[k]])}`;
+        logTrace(state);
         document.getElementById('inp-pc').value = pc;
-        if (!isRunning) updateView(); // Optimización: no actualizar la GUI completa de la tabla en cada paso si está corriendo
+        if (!isRunning) updateView();
         return true;
     }
 
-    function stopRun() {
-        isRunning = false;
-        document.getElementById('btn-run').style.display = 'inline-block';
-        document.getElementById('btn-step').disabled = false;
-        document.getElementById('btn-stop').style.display = 'none';
-        updateView();
-    }
-
     async function run() {
-        if (isRunning || halted) return;
-        isRunning = true;
-        
-        document.getElementById('btn-run').style.display = 'none';
-        document.getElementById('btn-step').disabled = true;
-        document.getElementById('btn-stop').style.display = 'inline-block';
-        
+        if (isRunning || halted) return; isRunning = true;
+        document.getElementById('btn-run').style.display = 'none'; document.getElementById('btn-stop').style.display = 'inline-block';
         let steps = 0;
         while (isRunning && !halted && pc < MEM_SIZE && steps < 5000) {
-            if (pc === breakpoint && steps > 0) {
-                logTrace(`>> BREAKPOINT alcanzado en dir: ${breakpoint}`);
-                break;
-            }
-            
+            if (pc === breakpoint && steps > 0) break;
             if (!step()) break;
-            
-            if (pc === breakpoint) {
-                logTrace(`>> BREAKPOINT alcanzado en dir: ${breakpoint}`);
-                break;
-            }
-            steps++;
-            
-            // Pausa asíncrona para que la web no se congele y se vea el log en tiempo real
-            // Actualizamos la vista de la tabla cada 10 pasos o al final para que no sea muy lento
-            if (steps % 5 === 0) {
-                updateView();
-            }
-            await new Promise(r => setTimeout(r, 15)); // Retardo de 15ms
+            if (pc === breakpoint) { updateView(); break; }
+            if (++steps % 10 === 0) { updateView(); await new Promise(r => setTimeout(r, 10)); }
         }
-        
-        if (steps >= 5000 && isRunning) {
-            logTrace("!! Ejecución detenida: Límite de 5000 pasos alcanzado (posible bucle infinito).");
-        }
-        
         stopRun();
     }
+    function stopRun() { isRunning = false; document.getElementById('btn-run').style.display = 'inline-block'; document.getElementById('btn-stop').style.display = 'none'; updateView(); }
+    function reset() { assemble(); }
+    function updatePCFromInput() { pc = parseInt(document.getElementById('inp-pc').value) || 0; updateView(); }
+    function updateBP() { breakpoint = parseInt(document.getElementById('inp-bp').value); updateView(); }
 
     function updateView() {
-        document.getElementById('reg-pc').innerText = pc;
-        document.getElementById('reg-fz').innerText = fz ? 1 : 0;
-        
-        let tbody = document.querySelector('#mem-table tbody');
-        tbody.innerHTML = '';
-        
+        document.getElementById('reg-pc').innerText = pc; document.getElementById('reg-fz').innerText = fz?1:0;
+        let tbody = document.querySelector('#mem-table tbody'); tbody.innerHTML = '';
         for (let i = 0; i < MEM_SIZE; i++) {
             let tr = document.createElement('tr');
-            
-            if (i === breakpoint) {
-                tr.className = 'bp-inst';
-            }
-            if (i === pc) {
-                tr.className = 'current-inst';
-            }
-            if (i !== pc && i !== breakpoint && mnemonics[i] === "") {
-                tr.className = 'empty-inst';
-            }
-            
-            let valHex = mem[i].toString(16).toUpperCase().padStart(4, '0');
-            let valDisp = types[i] === 2 ? getDisplayValue(mem[i]) : valHex;
-            
-            let dispMnem = mnemonics[i];
-            if(reverseLabels[i]) {
-                dispMnem = "<b>" + reverseLabels[i] + ":</b> " + dispMnem;
-            }
-            
-            tr.innerHTML = `
-                <td>${i}</td>
-                <td>${valDisp}</td>
-                <td>${dispMnem}</td>
-            `;
+            if (i === pc) tr.className = 'current-inst'; else if (i === breakpoint) tr.className = 'bp-inst'; else if (!mnemonics[i]) tr.className = 'empty-inst';
+            let dispVal = (i < 2) ? mem[i] : (types[i] === 2 ? getDisp(mem[i]) : mem[i].toString(16).toUpperCase().padStart(4, '0'));
+            tr.innerHTML = `<td>${i}</td><td>${dispVal}</td><td>${reverseLabels[i] ? `<b>${reverseLabels[i]}:</b> ` : ""}${mnemonics[i]}</td>`;
             tbody.appendChild(tr);
-            
-            if (i === pc && pc > 0) {
-                tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
+            if (i === pc && pc > 0) tr.scrollIntoView({ block: 'center' });
         }
     }
 
     function loadFile(event) {
-        let file = event.target.files[0];
-        if (!file) return;
-        
-        let reader = new FileReader();
-        
-        if (file.name.toUpperCase().endsWith('.MS')) {
-            reader.onload = function(e) {
-                let buf = new Uint8Array(e.target.result);
-                let decompiledText = decompileMS(buf);
-                if (decompiledText !== null) {
-                    document.getElementById('editor').value = decompiledText;
-                    handleEditorInput();
-                    assemble();
-                }
-                document.getElementById('file-input').value = '';
-            };
-            reader.readAsArrayBuffer(file);
+        let f = event.target.files[0]; if (!f) return;
+        let r = new FileReader();
+        if (f.name.toUpperCase().endsWith('.MS')) {
+            r.onload = (e) => { let b = new Uint8Array(e.target.result); document.getElementById('editor').value = decompile(b); handleEditorInput(); assemble(); };
+            r.readAsArrayBuffer(f);
         } else {
-            reader.onload = function(e) {
-                document.getElementById('editor').value = e.target.result;
-                handleEditorInput();
-                document.getElementById('file-input').value = '';
-            };
-            reader.readAsText(file);
+            r.onload = (e) => { document.getElementById('editor').value = e.target.result; handleEditorInput(); assemble(); };
+            r.readAsText(f);
         }
     }
 
-    function decompileMS(buf) {
-        if (buf.length < 388) {
-            alert("Archivo .MS inválido o demasiado pequeño.");
-            return null;
-        }
-        
-        let numLabels = buf[0] | (buf[1] << 8);
-        
-        let fileMem = new Array(128).fill(0);
-        let memOffset = 4;
-        for(let i=0; i<128; i++) {
-            fileMem[i] = buf[memOffset + (i*2)] | (buf[memOffset + (i*2) + 1] << 8);
-        }
-        
-        let fileTypes = new Array(128).fill(0);
-        let typesOffset = memOffset + 256;
-        for(let i=0; i<128; i++) {
-            fileTypes[i] = buf[typesOffset + i];
-        }
-        
-        let fileLabels = {};
-        let labelsNameOffset = typesOffset + 128;
-        let labelsPosOffset = labelsNameOffset + (numLabels * 7);
-        
-        for(let i=0; i<numLabels; i++) {
-            if (labelsPosOffset + (i*2) + 1 >= buf.length) break;
-            
-            let pos = buf[labelsPosOffset + (i*2)] | (buf[labelsPosOffset + (i*2) + 1] << 8);
-            
-            let name = "";
-            let pName = labelsNameOffset + (i*7);
-            for(let c=0; c<6; c++) {
-                let charCode = buf[pName + c];
-                if (charCode === 0) break;
-                name += String.fromCharCode(charCode);
-            }
+    function decompile(buf) {
+        let numL = buf[0] | (buf[1] << 8), fileMem = [], fileTypes = [], fileLabels = {};
+        for(let i=0; i<128; i++) fileMem[i] = buf[4+(i*2)] | (buf[4+(i*2)+1] << 8);
+        for(let i=0; i<128; i++) fileTypes[i] = buf[260+i];
+        let nameOff = 388, posOff = nameOff + (numL * 7);
+        for(let i=0; i<numL; i++) {
+            let pos = buf[posOff+(i*2)] | (buf[posOff+(i*2)+1] << 8), name = "";
+            for(let c=0; c<6; c++) { let ch = buf[nameOff+(i*7)+c]; if(!ch) break; name += String.fromCharCode(ch); }
             fileLabels[pos] = name;
         }
-        
-        let text = "; Código decompilado de archivo .MS\n\n";
-        for(let i=0; i<128; i++) {
-            if (fileTypes[i] === 0) {
-                if (fileLabels[i]) {
-                    text += fileLabels[i] + ":\n";
-                }
-                continue;
-            }
-            
-            let line = "";
-            if (fileLabels[i]) {
-                if (fileTypes[i] !== 2) text += "\n";
-                line += fileLabels[i] + ":";
-                if (fileTypes[i] !== 2) {
-                    text += line + "\n";
-                    line = "";
-                } else {
-                    line += " ";
-                }
-            }
-            
-            if (fileTypes[i] === 2) {
-                line += "DATA " + fileMem[i].toString(16).toUpperCase().padStart(4, '0');
-            } else if (fileTypes[i] === 1) {
-                let inst = fileMem[i];
-                if (inst === 0xFFFF) {
-                    line += "HALT";
-                } else {
-                    let opcode = (inst & 0xC000) >> 14;
-                    let op1 = (inst & 0x3F80) >> 7;
-                    let op2 = inst & 0x7F;
-                    
-                    let opStr = ["ADD", "CMP", "MOV", "BEQ"][opcode];
-                    let arg1 = fileLabels[op1] ? fileLabels[op1] : op1.toString();
-                    let arg2 = fileLabels[op2] ? fileLabels[op2] : op2.toString();
-                    
-                    if (opcode === 3) {
-                        line += opStr + " " + arg2;
-                    } else {
-                        line += opStr + " " + arg1 + ", " + arg2;
-                    }
+        let text = "; Decompilado\n";
+        for(let i=2; i<128; i++) {
+            if (!fileTypes[i] && !fileLabels[i]) continue;
+            let line = fileLabels[i] ? fileLabels[i] + ": " : "";
+            if (fileTypes[i] === 2) line += "DATA " + fileMem[i].toString(16).toUpperCase().padStart(4, '0');
+            else if (fileTypes[i] === 1) {
+                let v = fileMem[i]; if(v===0xFFFF) line+="HALT"; else {
+                    let op = (v>>14)&3, f = (v>>7)&0x7F, d = v&0x7F;
+                    line += ["ADD","CMP","MOV","BEQ"][op] + (op===3 ? ` ${fileLabels[d]||d}` : ` ${fileLabels[f]||f}, ${fileLabels[d]||d}`);
                 }
             }
             text += line + "\n";
         }
-        
-        return text.trim();
-    }
-
-    
-    function saveFileTxtClean() {
-        let text = document.getElementById('editor').value;
-        let cleanText = text.split('\n').map(line => {
-            let idx = line.indexOf(';');
-            if (idx !== -1) line = line.substring(0, idx);
-            return line.trimEnd();
-        }).filter(line => line.trim().length > 0).join('\n');
-        
-        const blob = new Blob([cleanText], {type: "text/plain;charset=utf-8"});
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = "codigo_limpio.txt";
-        a.click();
-    }
-
-    function saveFileTxt() {
-        const text = document.getElementById('editor').value;
-        const blob = new Blob([text], {type: "text/plain;charset=utf-8"});
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = "codigo.txt";
-        a.click();
+        return text;
     }
 
     function saveFileMS() {
-        let activeLabels = [];
-        for(let i=0; i<MEM_SIZE; i++) {
-            if(reverseLabels[i]) {
-                activeLabels.push({ name: reverseLabels[i], pos: i });
-            }
+        let active = []; for(let i=0; i<MEM_SIZE; i++) if(reverseLabels[i]) active.push({n:reverseLabels[i], p:i});
+        let buf = new Uint8Array(388 + active.length * 9);
+        buf[0] = active.length & 0xFF; buf[1] = (active.length >> 8) & 0xFF;
+        for(let i=0; i<MEM_SIZE; i++) { 
+            let v = (i===0) ? active.length : (i===1 ? 0 : mem[i]);
+            buf[4+i*2] = v & 0xFF; buf[4+i*2+1] = (v >> 8) & 0xFF; 
+            buf[260+i] = types[i];
         }
-        
-        let numLabels = activeLabels.length;
-        let totalSize = 4 + 256 + 128 + (numLabels * 7) + (numLabels * 2);
-        let buf = new Uint8Array(totalSize);
-
-        buf[0] = numLabels & 0xFF;
-        buf[1] = (numLabels >> 8) & 0xFF;
-        buf[2] = 0;
-        buf[3] = 0;
-
-        let memOffset = 4;
-        for(let i=0; i<MEM_SIZE; i++) {
-            buf[memOffset + (i*2)] = mem[i] & 0xFF;
-            buf[memOffset + (i*2) + 1] = (mem[i] >> 8) & 0xFF;
-        }
-
-        let typesOffset = memOffset + 256;
-        for(let i=0; i<MEM_SIZE; i++) {
-            buf[typesOffset + i] = types[i];
-        }
-
-        let labelsNameOffset = typesOffset + 128;
-        for(let i=0; i<numLabels; i++) {
-            let name = activeLabels[i].name.substring(0, 6);
-            for(let c=0; c<name.length; c++) {
-                buf[labelsNameOffset + (i*7) + c] = name.charCodeAt(c);
-            }
-            buf[labelsNameOffset + (i*7) + name.length] = 0;
-        }
-
-        let labelsPosOffset = labelsNameOffset + (numLabels * 7);
-        for(let i=0; i<numLabels; i++) {
-            let pos = activeLabels[i].pos;
-            buf[labelsPosOffset + (i*2)] = pos & 0xFF;
-            buf[labelsPosOffset + (i*2) + 1] = (pos >> 8) & 0xFF;
-        }
-
-        const blob = new Blob([buf], {type: "application/octet-stream"});
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = "PROG.MS";
-        a.click();
+        active.forEach((l, i) => {
+            for(let c=0; c<Math.min(l.n.length, 6); c++) buf[388+i*7+c] = l.n.charCodeAt(c);
+            let pOff = 388 + active.length*7 + i*2; buf[pOff] = l.p & 0xFF; buf[pOff+1] = (l.p >> 8) & 0xFF;
+        });
+        let a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([buf])); a.download = "PROG.MS"; a.click();
     }
 
-    handleEditorInput();
-    assemble();
-</script>
+    function saveFileTxt() { let a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([document.getElementById('editor').value])); a.download = "codigo.txt"; a.click(); }
+    function saveFileTxtClean() { 
+        let clean = document.getElementById('editor').value.split('\n').map(l => l.split(';')[0].trim()).filter(l => l).join('\n');
+        let a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([clean])); a.download = "limpio.txt"; a.click(); 
+    }
 
+    handleEditorInput(); assemble();
+</script>
 </body>
 </html>
